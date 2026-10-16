@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مسابقة حروف التفاعلية</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>مسابقة حروف التفاعلية | نسخة محسّنة</title>
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="مسابقة حروف عربية تفاعلية للفرق، مع أسئلة ومؤقت وجرس ونظام نقاط.">
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -28,7 +30,7 @@
         .btn-gray { background: #475569; }
         .btn-danger { background: #dc2626; }
         .input-field, .select-field { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; text-align: center; }
-        
+
         .scoreboard { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 15px; }
         .score-card { flex: 1; padding: 12px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 1.1rem; border: 2px solid #334155; }
         .score-green { background: rgba(22, 163, 74, 0.2); border-color: var(--green); color: #4ade80; }
@@ -38,11 +40,11 @@
         .border-indicator { text-align: center; font-weight: bold; padding: 6px; border-radius: 6px; margin: 5px 0; font-size: 0.9rem; }
         .border-green { background: var(--green); color: white; }
         .border-orange { background: var(--orange); color: white; }
-        
+
         .hex-grid { display: flex; flex-direction: column; align-items: center; direction: ltr; padding: 10px 5px; }
         .hex-row { display: flex; gap: 6px; margin-bottom: -14px; }
         .hex-row.odd { transform: translateX(31px); }
-        
+
         .hex-cell {
             width: 56px; height: 64px;
             background: var(--neutral);
@@ -71,6 +73,14 @@
         .progress-bar-fill { height: 100%; background: #38bdf8; width: 100%; transition: width 0.9s linear, background-color 0.3s; }
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
 
+        .history-panel { margin-top: 14px; }
+        .history-list { list-style: none; display: grid; gap: 6px; margin-top: 8px; max-height: 150px; overflow: auto; }
+        .history-list li { background: #1e293b; border-radius: 7px; padding: 7px 10px; color: #cbd5e1; font-size: .9rem; }
+        .connection-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 10px; background: #334155; font-size: .85rem; }
+        .hex-cell:focus-visible, .btn:focus-visible { outline: 3px solid #38bdf8; outline-offset: 3px; }
+        .hex-cell:disabled { cursor: default; }
+        .btn:disabled { opacity: .55; cursor: not-allowed; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
         @media (max-width: 500px) {
             .hex-cell { width: 44px; height: 50px; font-size: 1.1rem; }
             .hex-row { margin-bottom: -11px; gap: 4px; }
@@ -86,7 +96,7 @@
     <!-- 1. شاشة البداية -->
     <div id="lobby-screen" class="screen active">
         <div style="text-align: center; max-width: 480px; margin: auto;">
-            
+
             <div id="host-create-section">
                 <h2 style="margin-bottom: 12px;">إعداد المسابقة (للمقدم)</h2>
                 <label style="font-size: 0.95rem; color: #cbd5e1;">اختر المستوى العمري الفني للمسابقة:</label>
@@ -102,10 +112,10 @@
                 </button>
                 <hr style="border-color: #334155; margin: 20px 0;">
             </div>
-            
+
             <h2 style="margin-bottom: 10px; color: #38bdf8;">انضمام سريع للفريق</h2>
             <p style="color: #cbd5e1; margin-bottom: 15px; font-size: 0.95rem;">أدخل رمز الغرفة ثم اضغط فريقك:</p>
-            
+
             <div id="room-code-wrapper">
                 <input type="text" id="room-code-input" class="input-field" placeholder="رمز الغرفة (يُعبأ تلقائياً عبر الرابط)">
             </div>
@@ -144,9 +154,10 @@
                         <option value="25-50">25 - 50 سنة</option>
                     </select>
                 </div>
+                <button class="btn btn-gray" onclick="undoLastMove()" id="undo-btn" disabled>تراجع عن آخر تلوين ↶</button>
                 <button class="btn btn-gray" onclick="resetBoard()">جولة جديدة 🔄</button>
             </div>
-            
+
             <div class="flex-row" style="justify-content: center; background: #1e293b; padding: 10px; border-radius: 10px;">
                 <span style="font-size: 0.85rem; color: #cbd5e1; width: 100%; text-align: center;">روابط الدعوة الفورية للاعبين:</span>
                 <button class="btn btn-primary" onclick="copyInviteLink('any')">🔗 رابط عام</button>
@@ -160,6 +171,8 @@
 
         <div id="win-banner" class="buzz-alert" style="background: #eab308; color: #000; font-size: 1.5rem;"></div>
 
+        <div id="conn-banner" class="buzz-alert" style="background: #dc2626; color: #fff;"></div>
+        <div id="connection-status" class="connection-pill" style="margin: 8px auto;" aria-live="polite">● جاهز</div>
         <div id="buzz-banner" class="buzz-alert"></div>
         <div id="timer-box" class="timer-box">
             <div style="font-size: 0.9rem; color: #cbd5e1;">الوقت المتبقي للإجابة</div>
@@ -187,6 +200,11 @@
             <div id="current-question" style="font-size: 1.3rem; font-weight: bold; margin: 10px 0;">اختر حرفاً من الشبكة لبدء السؤال</div>
         </div>
 
+        <div id="history-panel" class="panel history-panel" style="display:none;">
+            <strong>سجل الجولة</strong>
+            <ul id="history-list" class="history-list" aria-live="polite"><li>لا توجد أحداث بعد.</li></ul>
+        </div>
+
         <div id="host-controls" class="panel" style="display: none;">
             <div style="margin-bottom: 12px; font-size: 1.1rem; background: #1e293b; padding: 10px; border-radius: 8px; text-align: center;">
                 الإجابة الصحيحة (تظهر لك فقط): <strong id="host-answer" style="color: #4ade80; font-size: 1.25rem;">-</strong>
@@ -202,7 +220,7 @@
 
         <div id="player-controls" class="panel" style="display: none; text-align: center;">
             <div style="margin-bottom: 8px;">
-                معرّفك: <strong id="player-id-label" style="color: #38bdf8;"></strong> | 
+                معرّفك: <strong id="player-id-label" style="color: #38bdf8;"></strong> |
                 الفريق: <span id="player-team-badge" class="badge"></span>
                 <button class="btn btn-gray" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeam()">تبديل الفريق</button>
             </div>
@@ -222,9 +240,9 @@ const LEVEL_NAMES = {
 const QUESTIONS_BY_AGE = {
     "أ": {
         "10-15": [{q: "حيوان مفترس يُلقب بملك الغابة؟", a: "أسد"}, {q: "حيوان أليف طويل الأذنين يحب أكل الجزر؟", a: "أرنب"}, {q: "الغاز الذي نتنفسه لنعيش؟", a: "أكسجين"}],
-        "15-20": [{q: "أكبر قارات العالم مساحة وسكاناً؟", a: "آسيا"}, {q: "أول الخلفاء الراشدين رضي الله عنه؟", a: "أبو بكر الصديق"}, {q: "أطول نهر في العالم من حيث التدفق؟", a: "الأمازون"}],
+        "15-20": [{q: "أكبر قارات العالم مساحة وسكاناً؟", a: "آسيا"}, {q: "أول الخلفاء الراشدين رضي الله عنه؟", a: "أبو بكر الصديق"}, {q: "أضخم نهر في العالم من حيث التدفق؟", a: "الأمازون"}],
         "20-25": [{q: "الهرمون المسؤول عن تنظيم مستوى السكر في الدم؟", a: "إنسولين"}, {q: "عاصمة اليونان التاريخية؟", a: "أثينا"}, {q: "مؤسس علم الجبر؟", a: "الخوارزمي"}],
-        "25-50": [{q: "أقرب نجم إلى المجموعة الشمسية بعد الشمس؟", a: "ألفا قنطورس"}, {q: "المعدن الأكثر كثافة بين جميع العناصر الطبيعية في الجدول الدوري؟", a: "أوزميوم"}, {q: "معركة تاريخية شهيرة وقعت بين الروم والمسلمين في بلاد الشام عام 13 هـ؟", a: "أجنادين"}]
+        "25-50": [{q: "أقرب نجم إلى الشمس (بعد الشمس نفسها)؟", a: "بروكسيما قنطورس"}, {q: "المعدن الأكثر كثافة بين جميع العناصر الطبيعية في الجدول الدوري؟", a: "أوزميوم"}, {q: "معركة تاريخية شهيرة وقعت بين الروم والمسلمين في بلاد الشام عام 13 هـ؟", a: "أجنادين"}]
     },
     "ب": {
         "10-15": [{q: "فاكهة حمضية كروية الشكل لونها برتقالي؟", a: "برتقال"}, {q: "طائر جميل يشتهر بقدرته على تقليد كلام الإنسان؟", a: "ببغاء"}, {q: "طائر قطبي يمشي بطرافة ويجيد السباحة؟", a: "بطريق"}],
@@ -399,6 +417,11 @@ let hostConn = null;
 let playerInfo = { name: "", team: "" };
 let timerInterval = null;
 let playerCounter = { green: 0, orange: 0 };
+let confettiFired = false;
+let hostInitializing = false;
+let joinInitializing = false;
+let moveHistory = [];
+let eventHistory = [];
 const MAX_TIMER_SECONDS = 10;
 
 let gameState = {
@@ -426,7 +449,6 @@ window.onload = () => {
         document.getElementById('room-code-wrapper').style.display = 'none';
 
         if (teamParam === 'green' || teamParam === 'orange') {
-            // تأخير طفيف لضمان تحميل مكتبة الاتصال
             setTimeout(() => joinGame(teamParam), 500);
         }
     }
@@ -434,7 +456,7 @@ window.onload = () => {
 
 function generateNewGrid() {
     stopHostTimer();
-    let shuffled = [...ARABIC_LETTERS].sort(() => 0.5 - Math.random()).slice(0, 25);
+    let shuffled = [...ARABIC_LETTERS].sort(() => Math.random() - 0.5).slice(0, 25);
     gameState.grid = shuffled.map(letter => ({ letter, owner: 'neutral' }));
     gameState.selectedIdx = null;
     gameState.questionText = "اختر حرفاً من الشبكة لبدء السؤال";
@@ -443,6 +465,7 @@ function generateNewGrid() {
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
     gameState.winner = null;
+    gameState.qIndex = 0;
 }
 
 function getQuestionsForLetter(letter, level) {
@@ -472,8 +495,12 @@ function renderUI() {
             const cellEl = document.createElement('div');
             cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '');
             cellEl.textContent = cell.letter;
+            cellEl.setAttribute('role', 'button');
+            cellEl.setAttribute('tabindex', isHost ? '0' : '-1');
+            cellEl.setAttribute('aria-label', `الحرف ${cell.letter}${cell.owner !== 'neutral' ? `، للفريق ${cell.owner === 'green' ? 'الأخضر' : 'البرتقالي'}` : ''}`);
             if (isHost) {
                 cellEl.onclick = () => selectCell(idx);
+                cellEl.onkeydown = (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectCell(idx); } };
             }
             rowEl.appendChild(cellEl);
         }
@@ -482,6 +509,8 @@ function renderUI() {
 
     document.getElementById('score-green').textContent = gameState.scores.green;
     document.getElementById('score-orange').textContent = gameState.scores.orange;
+    const undoBtn = document.getElementById('undo-btn');
+    if (undoBtn) undoBtn.disabled = !isHost || moveHistory.length === 0;
 
     const selCell = gameState.selectedIdx !== null ? gameState.grid[gameState.selectedIdx] : null;
     document.getElementById('current-letter').textContent = selCell ? selCell.letter : '-';
@@ -525,16 +554,18 @@ function renderUI() {
     } else {
         buzzBanner.style.display = 'none';
         timerBox.style.display = 'none';
-        if (buzzerBtn) buzzerBtn.disabled = false;
+        // الجرس معطّل حتى يُختار سؤال أو بعد الفوز
+        if (buzzerBtn) buzzerBtn.disabled = gameState.selectedIdx === null || !!gameState.winner;
     }
 
     const winBanner = document.getElementById('win-banner');
     if (gameState.winner) {
         winBanner.style.display = 'block';
         winBanner.textContent = `🎉 مبروك! الفائز هو ${gameState.winner === 'green' ? 'الفريق الأخضر' : 'الفريق البرتقالي'} 🎉`;
-        triggerConfetti();
+        if (!confettiFired) { triggerConfetti(); confettiFired = true; }
     } else {
         winBanner.style.display = 'none';
+        confettiFired = false;
     }
 }
 
@@ -570,6 +601,9 @@ function stopHostTimer() {
 }
 
 function initHost() {
+    if (hostInitializing || isHost) return;
+    hostInitializing = true;
+    setConnectionStatus('جاري إنشاء غرفة المسابقة…');
     isHost = true;
     const initLevel = document.getElementById('initial-level-select').value;
     gameState.ageLevel = initLevel;
@@ -580,6 +614,8 @@ function initHost() {
     peer = new Peer(roomCode);
 
     peer.on('open', (id) => {
+        hostInitializing = false;
+        setConnectionStatus('أنت مقدم المسابقة • الغرفة جاهزة');
         document.getElementById('lobby-screen').classList.remove('active');
         document.getElementById('game-screen').classList.add('active');
         document.getElementById('host-info-bar').style.display = 'block';
@@ -589,16 +625,30 @@ function initHost() {
     });
 
     peer.on('connection', (conn) => {
-        connections.push(conn);
+        if (!connections.includes(conn)) connections.push(conn);
+        conn.on('error', () => { setConnectionStatus('يوجد خلل باتصال أحد اللاعبين'); });
         conn.on('data', (data) => handleHostReceive(conn, data));
         conn.on('close', () => {
             connections = connections.filter(c => c !== conn);
             updateConnectedPlayersList();
+            broadcastState();
         });
+    });
+    peer.on('error', (err) => {
+        hostInitializing = false;
+        const message = err && err.type === 'unavailable-id' ? 'رمز الغرفة مستخدم؛ حاول إنشاء الغرفة مرة أخرى.' : 'تعذّر إنشاء الغرفة. تحقق من اتصال الإنترنت ثم أعد المحاولة.';
+        setConnectionStatus(message);
+        alert(message);
+        isHost = false;
     });
 }
 
 function changeLevel(newLevel) {
+    if (!isHost || !LEVEL_NAMES[newLevel]) return;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timeLeft = 0;
+    gameState.timerExpired = false;
     gameState.ageLevel = newLevel;
     gameState.qIndex = 0;
     if (gameState.selectedIdx !== null) {
@@ -610,7 +660,8 @@ function changeLevel(newLevel) {
 
 function handleHostReceive(conn, data) {
     if (data.type === 'JOIN') {
-        let assignedName = data.name;
+        if (data.team !== 'green' && data.team !== 'orange') { try { conn.close(); } catch (e) {} return; }
+        let assignedName = typeof data.name === 'string' ? data.name.trim().slice(0, 30) : ''; 
         if (!assignedName) {
             playerCounter[data.team] = (playerCounter[data.team] || 0) + 1;
             const teamAr = data.team === 'green' ? 'أخضر' : 'برتقالي';
@@ -622,12 +673,14 @@ function handleHostReceive(conn, data) {
         updateConnectedPlayersList();
         broadcastState();
     } else if (data.type === 'SWITCH_TEAM') {
+        if (data.team !== 'green' && data.team !== 'orange') return;
         conn.playerTeam = data.team;
         updateConnectedPlayersList();
         broadcastState();
     } else if (data.type === 'BUZZ') {
-        if (!gameState.buzzedPlayer) {
-            gameState.buzzedPlayer = { name: conn.playerName || data.name, team: conn.playerTeam || data.team };
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam) {
+            gameState.buzzedPlayer = { name: conn.playerName || 'لاعب', team: conn.playerTeam };
+            addEvent(`ضغط ${gameState.buzzedPlayer.name} الجرس للفريق ${gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'}`);
             playBuzzSound();
             startHostTimer();
         }
@@ -658,10 +711,12 @@ function broadcastState() {
 }
 
 function selectCell(idx) {
+    if (!isHost || gameState.winner || !gameState.grid[idx]) return;
     stopHostTimer();
     gameState.buzzedPlayer = null;
     gameState.timerExpired = false;
     gameState.selectedIdx = idx;
+    addEvent(`اختير الحرف ${gameState.grid[idx].letter}`);
     const letter = gameState.grid[idx].letter;
     const qList = getQuestionsForLetter(letter, gameState.ageLevel);
     gameState.qIndex = Math.floor(Math.random() * Math.max(1, qList.length));
@@ -671,74 +726,116 @@ function selectCell(idx) {
 }
 
 function loadQuestionForSelected() {
-    if (gameState.selectedIdx === null) return;
+    if (gameState.selectedIdx === null || !gameState.grid[gameState.selectedIdx]) return;
     const letter = gameState.grid[gameState.selectedIdx].letter;
     const qList = getQuestionsForLetter(letter, gameState.ageLevel);
+    if (!qList.length) { gameState.questionText = `سؤال مفتوح بحرف ${letter}`; gameState.answerText = '-'; return; }
     const qObj = qList[gameState.qIndex % qList.length];
     gameState.questionText = qObj.q;
     gameState.answerText = qObj.a;
 }
 
 function changeQuestion() {
-    if (gameState.selectedIdx === null) return;
+    if (!isHost || gameState.selectedIdx === null || gameState.winner) return;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timeLeft = 0;
+    gameState.timerExpired = false;
     gameState.qIndex++;
+    addEvent('تم الانتقال إلى سؤال آخر');
     loadQuestionForSelected();
     renderUI();
     broadcastState();
 }
 
 function colorSelectedCell(color) {
-    if (gameState.selectedIdx === null) return;
+    if (!isHost || gameState.selectedIdx === null || gameState.winner) return;
+    if (!['green', 'orange', 'neutral'].includes(color)) return;
     stopHostTimer();
-    const prevOwner = gameState.grid[gameState.selectedIdx].owner;
-    
-    if (color === 'green' && prevOwner !== 'green') {
-        gameState.scores.green += 10;
-        if (prevOwner === 'orange') gameState.scores.orange = Math.max(0, gameState.scores.orange - 10);
-    } else if (color === 'orange' && prevOwner !== 'orange') {
-        gameState.scores.orange += 10;
-        if (prevOwner === 'green') gameState.scores.green = Math.max(0, gameState.scores.green - 10);
+    const idx = gameState.selectedIdx;
+    const prevOwner = gameState.grid[idx].owner;
+    if (prevOwner === color) {
+        gameState.buzzedPlayer = null;
+        gameState.timerExpired = false;
+        gameState.timeLeft = 0;
+        renderUI(); broadcastState(); return;
     }
-
-    gameState.grid[gameState.selectedIdx].owner = color;
+    moveHistory.push({ idx, owner: prevOwner, scores: { ...gameState.scores }, winner: gameState.winner });
+    if (prevOwner === 'green') gameState.scores.green = Math.max(0, gameState.scores.green - 10);
+    if (prevOwner === 'orange') gameState.scores.orange = Math.max(0, gameState.scores.orange - 10);
+    if (color === 'green') gameState.scores.green += 10;
+    if (color === 'orange') gameState.scores.orange += 10;
+    gameState.grid[idx].owner = color;
     gameState.buzzedPlayer = null;
+    gameState.timeLeft = 0;
     gameState.timerExpired = false;
+    addEvent(color === 'neutral' ? `أُعيد الحرف ${gameState.grid[idx].letter} إلى الأصفر` : `مُنح الحرف ${gameState.grid[idx].letter} للفريق ${color === 'green' ? 'الأخضر' : 'البرتقالي'} (+10 نقاط)`);
     checkWinCondition();
+    if (gameState.winner) addEvent(`فاز الفريق ${gameState.winner === 'green' ? 'الأخضر' : 'البرتقالي'}!`);
+    renderUI();
+    broadcastState();
+}
+
+function undoLastMove() {
+    if (!isHost || !moveHistory.length) return;
+    const previous = moveHistory.pop();
+    gameState.grid[previous.idx].owner = previous.owner;
+    gameState.scores = { ...previous.scores };
+    gameState.winner = previous.winner;
+    gameState.buzzedPlayer = null;
+    gameState.timeLeft = 0;
+    gameState.timerExpired = false;
+    addEvent(`تم التراجع عن تلوين الحرف ${gameState.grid[previous.idx].letter}`);
     renderUI();
     broadcastState();
 }
 
 function unlockBuzzer() {
+    if (!isHost) return;
     stopHostTimer();
     gameState.buzzedPlayer = null;
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
+    addEvent('تم تصفير الجرس والمؤقت');
     renderUI();
     broadcastState();
 }
 
 function resetBoard() {
+    if (!isHost) return;
+    if (!confirm('بدء جولة جديدة؟ سيتم تصفير اللوحة والنقاط.')) return;
     generateNewGrid();
+    moveHistory = [];
+    eventHistory = [];
     gameState.scores = { green: 0, orange: 0 };
+    addEvent('بدأت جولة جديدة');
     renderUI();
     broadcastState();
 }
 
-function copyInviteLink(teamType) {
+async function copyInviteLink(teamType) {
+    if (!isHost) return;
     const code = document.getElementById('display-room-code').textContent;
-    let url = `${window.location.origin}${window.location.pathname}?room=${code}`;
+    let url = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(code)}`;
     if (teamType === 'green' || teamType === 'orange') {
         url += `&team=${teamType}`;
     }
-    navigator.clipboard.writeText(url);
-    alert("تم نسخ الرابط بنجاح! أرسله للاعبين:\n" + url);
+    try {
+        if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(url); alert('تم نسخ رابط الدعوة:\n' + url); }
+        else { window.prompt('انسخ رابط الدعوة التالي:', url); }
+    } catch (e) { window.prompt('انسخ رابط الدعوة التالي:', url); }
 }
 
 function joinGame(team) {
+    if (joinInitializing || hostConn && hostConn.open) return;
+    if (team !== 'green' && team !== 'orange') return;
+    joinInitializing = true;
+    setConnectionStatus('جاري الاتصال بالغرفة…');
     const code = document.getElementById('room-code-input').value.trim();
     const customName = document.getElementById('player-name-input').value.trim();
     if (!code) {
-        alert("يرجى التأكد من وجود رمز الغرفة أولاً");
+        joinInitializing = false;
+        alert('يرجى التأكد من وجود رمز الغرفة أولاً');
         return;
     }
     playerInfo = { name: customName, team };
@@ -748,18 +845,28 @@ function joinGame(team) {
     peer.on('open', () => {
         hostConn = peer.connect(code);
         hostConn.on('open', () => {
+            joinInitializing = false;
+            setConnectionStatus('متصل بالمقدم');
             document.getElementById('lobby-screen').classList.remove('active');
             document.getElementById('game-screen').classList.add('active');
             document.getElementById('player-controls').style.display = 'block';
             updatePlayerBadge();
             hostConn.send({ type: 'JOIN', name: customName, team });
         });
+        hostConn.on('close', () => {
+            joinInitializing = false;
+            setConnectionStatus('انقطع الاتصال بالمقدم');
+            const b = document.getElementById('conn-banner');
+            b.style.display = 'block';
+            b.textContent = '⚠️ انقطع الاتصال بالمقدم';
+            document.getElementById('buzzer-btn').disabled = true;
+        });
         hostConn.on('data', (data) => {
             if (data.type === 'ASSIGNED_INFO') {
                 playerInfo.name = data.name;
                 playerInfo.team = data.team;
                 updatePlayerBadge();
-            } else if (data.type === 'STATE') {
+            } else if (data.type === 'STATE' && data.state && Array.isArray(data.state.grid) && data.state.grid.length === 25) {
                 const prevExpired = gameState.timerExpired;
                 const prevBuzzed = gameState.buzzedPlayer;
                 gameState = { ...gameState, ...data.state };
@@ -768,6 +875,12 @@ function joinGame(team) {
                 renderUI();
             }
         });
+    });
+    peer.on('error', (err) => {
+        joinInitializing = false;
+        const msg = err && err.type === 'peer-unavailable' ? 'الغرفة غير موجودة أو انتهت صلاحيتها. تحقق من الرمز.' : 'تعذّر الاتصال بالغرفة؛ تحقق من الإنترنت ورمز الغرفة.';
+        document.getElementById('lobby-status').textContent = msg;
+        setConnectionStatus(msg);
     });
 }
 
@@ -779,6 +892,7 @@ function updatePlayerBadge() {
 }
 
 function switchTeam() {
+    if (!hostConn || !hostConn.open) return;
     playerInfo.team = playerInfo.team === 'green' ? 'orange' : 'green';
     updatePlayerBadge();
     if (hostConn && hostConn.open) {
@@ -787,14 +901,36 @@ function switchTeam() {
 }
 
 function sendBuzz() {
-    if (hostConn && hostConn.open && !gameState.buzzedPlayer) {
+    if (hostConn && hostConn.open && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
         hostConn.send({ type: 'BUZZ', name: playerInfo.name, team: playerInfo.team });
     }
 }
 
+function setConnectionStatus(message) {
+    const el = document.getElementById('connection-status');
+    if (el) el.textContent = '● ' + message;
+}
+
+function addEvent(message) {
+    if (!isHost) return;
+    const stamp = new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    eventHistory.unshift(`${stamp} — ${message}`);
+    eventHistory = eventHistory.slice(0, 30);
+    const panel = document.getElementById('history-panel');
+    const list = document.getElementById('history-list');
+    if (!panel || !list) return;
+    panel.style.display = 'block';
+    list.replaceChildren();
+    eventHistory.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        list.appendChild(li);
+    });
+}
+
 function getHexNeighbors(r, c) {
     const isOdd = r % 2 === 1;
-    const dirs = isOdd 
+    const dirs = isOdd
         ? [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]]
         : [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
     return dirs.map(([dr, dc]) => [r + dr, c + dc])
@@ -815,6 +951,7 @@ function checkWinCondition() {
 
 function bfsCheck(team, isStart, isEnd) {
     let queue = [];
+    let head = 0;
     let visited = new Set();
 
     for (let r = 0; r < 5; r++) {
@@ -827,8 +964,8 @@ function bfsCheck(team, isStart, isEnd) {
         }
     }
 
-    while (queue.length > 0) {
-        const [r, c] = queue.shift();
+    while (head < queue.length) {
+        const [r, c] = queue[head++];
         if (isEnd(r, c)) return true;
 
         for (const [nr, nc] of getHexNeighbors(r, c)) {
@@ -861,6 +998,7 @@ function playTickSound(freq, duration) {
         osc.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + duration);
+        osc.onended = () => ctx.close().catch(() => {});
     } catch (e) {}
 }
 
@@ -874,8 +1012,14 @@ function playTimeUpSound() {
         osc.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + 0.5);
+        osc.onended = () => ctx.close().catch(() => {});
     } catch (e) {}
 }
+
+window.addEventListener('beforeunload', () => {
+    stopHostTimer();
+    try { if (peer && !peer.destroyed) peer.destroy(); } catch (e) {}
+});
 </script>
 </body>
 </html>
