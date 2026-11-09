@@ -357,6 +357,10 @@
             <div style="margin-bottom: 12px; font-size: 1.1rem; background: #1e293b; padding: 10px; border-radius: 8px; text-align: center;">
                 الإجابة الصحيحة (تظهر لك فقط): <strong id="host-answer" style="color: #4ade80; font-size: 1.25rem;">-</strong>
             </div>
+            <div class="flex-row" id="judge-row" style="display: none; margin-bottom: 10px;">
+                <button class="btn btn-green" onclick="judgeAnswer(true)">✅ إجابة صحيحة</button>
+                <button class="btn btn-danger" onclick="judgeAnswer(false)">❌ إجابة خاطئة</button>
+            </div>
             <div class="flex-row">
                 <button class="btn btn-green" onclick="colorSelectedCell('green')">تلوين للأخضر (+10)</button>
                 <button class="btn btn-orange" onclick="colorSelectedCell('orange')">تلوين للبرتقالي (+10)</button>
@@ -943,6 +947,30 @@ function colorSelectedCell(color) {
     if (gameState.winner) addEvent(`فاز الفريق ${gameState.winner === 'green' ? 'الأخضر' : 'البرتقالي'}!`);
     renderUI();
     broadcastState();
+}
+
+/* ---------- judgeAnswer: host marks the buzzed answer right/wrong ----------
+   Fix 2026-11-09: answering right/wrong never showed on the board — the only
+   way to score was the manual "تلوين" buttons, which the host had to remember
+   to press. Now the host gets explicit ✅/❌ buttons once someone buzzes:
+   ✅ colours the cell for the buzzing player's team (+10, win check runs),
+   ❌ re-opens the buzzer so the other team can try the same question. */
+function judgeAnswer(correct) {
+    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    if (correct) {
+        colorSelectedCell(gameState.buzzedPlayer.team);
+    } else {
+        const nm = gameState.buzzedPlayer.name;
+        const tm = gameState.buzzedPlayer.team;
+        stopHostTimer();
+        gameState.buzzedPlayer = null;
+        gameState.timeLeft = 0;
+        gameState.timerExpired = false;
+        gameState.lastMove = '❌ إجابة خاطئة من ' + nm + ' (' + (tm === 'green' ? 'الفريق الأخضر' : 'الفريق البرتقالي') + ') — الجرس مفتوح للفريق الآخر';
+        addEvent('إجابة خاطئة من ' + nm);
+        renderUI();
+        broadcastState();
+    }
 }
 
 function undoLastMove() {
@@ -1617,8 +1645,24 @@ function handleHostReceive(conn, data) {
     } else if (data.type === 'HINT') {
         applyHint(conn.playerName || 'لاعب');
     } else if (data.type === 'LEAVE') {
+        // Fix 2026-11-09: a deliberate leave mid-game used to remove the player
+        // silently — no message, and a stale buzz stayed on screen. Announce it
+        // and clean up (a deliberate leave is not a disconnect, so no pause).
+        const leaver = conn.playerName;
         gameState.roster = (gameState.roster || []).filter(r => r.peerId !== conn.peer);
-        renderRoomLobby();
+        if (gameState.phase === 'playing' && leaver) {
+            if (gameState.buzzedPlayer && gameState.buzzedPlayer.name === leaver) {
+                stopHostTimer();
+                gameState.buzzedPlayer = null;
+                gameState.timeLeft = 0;
+                gameState.timerExpired = false;
+            }
+            gameState.lastMove = '🚪 غادر ' + leaver + ' اللعبة';
+            addEvent('غادر ' + leaver + ' اللعبة');
+            renderUI();
+        } else {
+            renderRoomLobby();
+        }
         updateConnectedPlayersList();
         broadcastState();
     }
@@ -2403,6 +2447,8 @@ function renderExtraUI() {
             });
         }
     }
+    const jr = document.getElementById('judge-row');
+    if (jr) jr.style.display = (isHost && gameState.buzzedPlayer && gameState.selectedIdx !== null && !gameState.winner) ? 'flex' : 'none';
     const lm = document.getElementById('last-move');
     if (lm) lm.textContent = gameState.lastMove || '—';
     const lvl = document.getElementById('current-level-badge');
@@ -2538,10 +2584,34 @@ function tryPickType(type, letter, stage) {
         const picked = pool && pool.length ? pickFromPool(usedKey('words', stage + ':' + letter), pool) : null;
         if (!picked) return false;
         const it = picked.item;
+        // Fix 2026-11-09: word questions showed no options at all (opts was
+        // null), so players had nothing to choose from — only the buzzer.
+        // Now every word question is a 3-option choice: the correct word plus
+        // 2 distractors from the same stage but different letters.
+        const wordOf = (x) => typeof x === 'string' ? x : (x.a || x.answer || '');
+        const correct = wordOf(it);
+        let opts = null;
+        if (correct) {
+            const seen = new Set([correct]);
+            const cands = [];
+            const stageWords = (S.words && S.words[stage]) || {};
+            Object.keys(stageWords).forEach((ltr) => {
+                if (ltr === letter) return;
+                (stageWords[ltr] || []).forEach((w) => {
+                    const s = wordOf(w);
+                    if (s && !seen.has(s)) { seen.add(s); cands.push(s); }
+                });
+            });
+            if (cands.length >= 2) {
+                const d = [];
+                while (d.length < 2 && cands.length) d.push(cands.splice(Math.floor(Math.random() * cands.length), 1)[0]);
+                opts = [correct, d[0], d[1]].sort(() => Math.random() - 0.5);
+            }
+        }
         if (typeof it === 'string') {
-            setQ('اذكر كلمة تبدأ بحرف ' + letter + ' (مرحلة ' + STAGE_NAMES[stage] + ')', it, null, 'الكلمة من ' + it.length + ' أحرف', 'word');
+            setQ('اذكر كلمة تبدأ بحرف ' + letter + ' (مرحلة ' + STAGE_NAMES[stage] + ')', it, opts, 'الكلمة من ' + it.length + ' أحرف', 'word');
         } else {
-            setQ(it.q, it.a || it.answer || '-', null, '', 'word');
+            setQ(it.q, it.a || it.answer || '-', opts, '', 'word');
         }
         return true;
     }
