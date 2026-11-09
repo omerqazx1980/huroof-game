@@ -2494,13 +2494,15 @@ function advanceStage() {
 }
 
 /* ===== Edit B (Phase 2): questions engine + stages + no-repeat ===== */
-/* Picker weights: word 25%, letter_quiz 20%, quiz 15%, riddle 8%, proverb 7%,
-   whoami 7%, synonyms 5%, truefalse 4%, saudi 4%, challenge 5%. */
+/* Picker weights (fix 2026-11-09): a letter pick serves letter-linked content
+   ONLY. Before, the roll mixed generic sections in (quiz 15%, riddles, ...),
+   so picking ز could serve a generic question whose answer (خديجة) had
+   nothing to do with ز. Now: word 50% (a word starting with the letter),
+   letter_quiz 50% (MCQ whose correct answer starts with the letter).
+   Generic sections stay in the bank file but are never served for a letter pick. */
 
 const PICK_WEIGHTS = [
-    ['word', 25], ['letter_quiz', 20], ['quiz', 15], ['riddle', 8],
-    ['proverb', 7], ['whoami', 7], ['synonyms', 5], ['truefalse', 4],
-    ['saudi', 4], ['challenge', 5]
+    ['word', 50], ['letter_quiz', 50]
 ];
 
 function pickFromPool(key, pool) {
@@ -2603,7 +2605,7 @@ function pickQuestionForLetter(letter) {
         }
     }
     if (tryPickType(type, letter, stage)) return;
-    const fallbacks = ['word', 'letter_quiz', 'quiz', 'riddle', 'proverb', 'whoami', 'synonyms', 'truefalse', 'saudi', 'challenge'];
+    const fallbacks = ['word', 'letter_quiz'];
     for (const fb of fallbacks) {
         if (fb === type) continue;
         if (tryPickType(fb, letter, stage)) return;
