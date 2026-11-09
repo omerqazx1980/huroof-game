@@ -4,7 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>مسابقة حروف التفاعلية</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- PeerJS 1.5.2 vendored INLINE (same code as https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js) -->
+    <!-- Inlined because the unpkg CDN fails to load in the in-app/sandbox browser (net::ERR_TUNNEL_CONNECTION_FAILED), -->
+    <!-- which left `Peer` undefined and made room creation throw "Peer is not defined" (game dead from the first click). -->
+    <!-- The PeerJS cloud broker (0.peerjs.com) is still used for signalling; only the library file is now local. -->
+    <script>
+(()=>{function e(e,t,n,r){Object.defineProperty(e,t,{get:n,set:r,enumerable:!0,configurable:!0})}function t(e){return e&&e.__esModule?e.default:e}class n{constructor(){this.chunkedMTU=16300,this._dataCount=1,this.chunk=e=>{let t=[],n=e.byteLength,r=Math.ceil(n/this.chunkedMTU),i=0,o=0;for(;o<n;){let s=Math.min(n,o+this.chunkedMTU),a=e.slice(o,s),c={__peerData:this._dataCount,n:i,data:a,total:r};t.push(c),o=s,i++}return this._dataCount++,t}}}class r{append_buffer(e){this.flush(),this._parts.push(e)}append(e){this._pieces.push(e)}flush(){if(this._pieces.length>0){let e=new Uint8Array(this._pieces);this._parts.push(e),this._pieces=[]}}toArrayBuffer(){let e=[];for(let t of this._parts)e.push(t);return function(e){let t=0;for(let n of e)t+=n.byteLength;let n=new Uint8Array(t),r=0;for(let t of e){let e=new Uint8Array(t.buffer,t.byteOffset,t.byteLength);n.set(e,r),r+=t.byteLength}return n}(e).buffer}constructor(){this.encoder=new TextEncoder,this._pieces=[],this._parts=[]}}function i(e){return new s(e).unpack()}function o(e){let t=new a,n=t.pack(e);return n instanceof Promise?n.then(()=>t.getBuffer()):t.getBuffer()}class s{unpack(){let e;let t=this.unpack_uint8();if(t<128)return t;if((224^t)<32)return(224^t)-32;if((e=160^t)<=15)return this.unpack_raw(e);if((e=176^t)<=15)return this.unpack_string(e);if((e=144^t)<=15)return this.unpack_array(e);if((e=128^t)<=15)return this.unpack_map(e);switch(t){case 192:return null;case 193:case 212:case 213:case 214:case 215:return;case 194:return!1;case 195:return!0;case 202:return this.unpack_float();case 203:return this.unpack_double();case 204:return this.unpack_uint8();case 205:return this.unpack_uint16();case 206:return this.unpack_uint32();case 207:return this.unpack_uint64();case 208:return this.unpack_int8();case 209:return this.unpack_int16();case 210:return this.unpack_int32();case 211:return this.unpack_int64();case 216:return e=this.unpack_uint16(),this.unpack_string(e);case 217:return e=this.unpack_uint32(),this.unpack_string(e);case 218:return e=this.unpack_uint16(),this.unpack_raw(e);case 219:return e=this.unpack_uint32(),this.unpack_raw(e);case 220:return e=this.unpack_uint16(),this.unpack_array(e);case 221:return e=this.unpack_uint32(),this.unpack_array(e);case 222:return e=this.unpack_uint16(),this.unpack_map(e);case 223:return e=this.unpack_uint32(),this.unpack_map(e)}}unpack_uint8(){let e=255&this.dataView[this.index];return this.index++,e}unpack_uint16(){let e=this.read(2),t=(255&e[0])*256+(255&e[1]);return this.index+=2,t}unpack_uint32(){let e=this.read(4),t=((256*e[0]+e[1])*256+e[2])*256+e[3];return this.index+=4,t}unpack_uint64(){let e=this.read(8),t=((((((256*e[0]+e[1])*256+e[2])*256+e[3])*256+e[4])*256+e[5])*256+e[6])*256+e[7];return this.index+=8,t}unpack_int8(){let e=this.unpack_uint8();return e<128?e:e-256}unpack_int16(){let e=this.unpack_uint16();return e<32768?e:e-65536}unpack_int32(){let e=this.unpack_uint32();return e<2147483648?e:e-4294967296}unpack_int64(){let e=this.unpack_uint64();return e<0x7fffffffffffffff?e:e-18446744073709552e3}unpack_raw(e){if(this.length<this.index+e)throw Error(`BinaryPackFailure: index is out of range ${this.index} ${e} ${this.length}`);let t=this.dataBuffer.slice(this.index,this.index+e);return this.index+=e,t}unpack_string(e){let t,n;let r=this.read(e),i=0,o="";for(;i<e;)(t=r[i])<160?(n=t,i++):(192^t)<32?(n=(31&t)<<6|63&r[i+1],i+=2):(224^t)<16?(n=(15&t)<<12|(63&r[i+1])<<6|63&r[i+2],i+=3):(n=(7&t)<<18|(63&r[i+1])<<12|(63&r[i+2])<<6|63&r[i+3],i+=4),o+=String.fromCodePoint(n);return this.index+=e,o}unpack_array(e){let t=Array(e);for(let n=0;n<e;n++)t[n]=this.unpack();return t}unpack_map(e){let t={};for(let n=0;n<e;n++)t[this.unpack()]=this.unpack();return t}unpack_float(){let e=this.unpack_uint32();return(0==e>>31?1:-1)*(8388607&e|8388608)*2**((e>>23&255)-127-23)}unpack_double(){let e=this.unpack_uint32(),t=this.unpack_uint32(),n=(e>>20&2047)-1023;return(0==e>>31?1:-1)*((1048575&e|1048576)*2**(n-20)+t*2**(n-52))}read(e){let t=this.index;if(t+e<=this.length)return this.dataView.subarray(t,t+e);throw Error("BinaryPackFailure: read index out of range")}constructor(e){this.index=0,this.dataBuffer=e,this.dataView=new Uint8Array(this.dataBuffer),this.length=this.dataBuffer.byteLength}}class a{getBuffer(){return this._bufferBuilder.toArrayBuffer()}pack(e){if("string"==typeof e)this.pack_string(e);else if("number"==typeof e)Math.floor(e)===e?this.pack_integer(e):this.pack_double(e);else if("boolean"==typeof e)!0===e?this._bufferBuilder.append(195):!1===e&&this._bufferBuilder.append(194);else if(void 0===e)this._bufferBuilder.append(192);else if("object"==typeof e){if(null===e)this._bufferBuilder.append(192);else{let t=e.constructor;if(e instanceof Array){let t=this.pack_array(e);if(t instanceof Promise)return t.then(()=>this._bufferBuilder.flush())}else if(e instanceof ArrayBuffer)this.pack_bin(new Uint8Array(e));else if("BYTES_PER_ELEMENT"in e)this.pack_bin(new Uint8Array(e.buffer,e.byteOffset,e.byteLength));else if(e instanceof Date)this.pack_string(e.toString());else if(e instanceof Blob)return e.arrayBuffer().then(e=>{this.pack_bin(new Uint8Array(e)),this._bufferBuilder.flush()});else if(t==Object||t.toString().startsWith("class")){let t=this.pack_object(e);if(t instanceof Promise)return t.then(()=>this._bufferBuilder.flush())}else throw Error(`Type "${t.toString()}" not yet supported`)}}else throw Error(`Type "${typeof e}" not yet supported`);this._bufferBuilder.flush()}pack_bin(e){let t=e.length;if(t<=15)this.pack_uint8(160+t);else if(t<=65535)this._bufferBuilder.append(218),this.pack_uint16(t);else if(t<=4294967295)this._bufferBuilder.append(219),this.pack_uint32(t);else throw Error("Invalid length");this._bufferBuilder.append_buffer(e)}pack_string(e){let t=this._textEncoder.encode(e),n=t.length;if(n<=15)this.pack_uint8(176+n);else if(n<=65535)this._bufferBuilder.append(216),this.pack_uint16(n);else if(n<=4294967295)this._bufferBuilder.append(217),this.pack_uint32(n);else throw Error("Invalid length");this._bufferBuilder.append_buffer(t)}pack_array(e){let t=e.length;if(t<=15)this.pack_uint8(144+t);else if(t<=65535)this._bufferBuilder.append(220),this.pack_uint16(t);else if(t<=4294967295)this._bufferBuilder.append(221),this.pack_uint32(t);else throw Error("Invalid length");let n=r=>{if(r<t){let t=this.pack(e[r]);return t instanceof Promise?t.then(()=>n(r+1)):n(r+1)}};return n(0)}pack_integer(e){if(e>=-32&&e<=127)this._bufferBuilder.append(255&e);else if(e>=0&&e<=255)this._bufferBuilder.append(204),this.pack_uint8(e);else if(e>=-128&&e<=127)this._bufferBuilder.append(208),this.pack_int8(e);else if(e>=0&&e<=65535)this._bufferBuilder.append(205),this.pack_uint16(e);else if(e>=-32768&&e<=32767)this._bufferBuilder.append(209),this.pack_int16(e);else if(e>=0&&e<=4294967295)this._bufferBuilder.append(206),this.pack_uint32(e);else if(e>=-2147483648&&e<=2147483647)this._bufferBuilder.append(210),this.pack_int32(e);else if(e>=-0x8000000000000000&&e<=0x7fffffffffffffff)this._bufferBuilder.append(211),this.pack_int64(e);else if(e>=0&&e<=18446744073709552e3)this._bufferBuilder.append(207),this.pack_uint64(e);else throw Error("Invalid integer")}pack_double(e){let t=0;e<0&&(t=1,e=-e);let n=Math.floor(Math.log(e)/Math.LN2),r=Math.floor((e/2**n-1)*4503599627370496),i=t<<31|n+1023<<20|r/4294967296&1048575;this._bufferBuilder.append(203),this.pack_int32(i),this.pack_int32(r%4294967296)}pack_object(e){let t=Object.keys(e),n=t.length;if(n<=15)this.pack_uint8(128+n);else if(n<=65535)this._bufferBuilder.append(222),this.pack_uint16(n);else if(n<=4294967295)this._bufferBuilder.append(223),this.pack_uint32(n);else throw Error("Invalid length");let r=n=>{if(n<t.length){let i=t[n];if(e.hasOwnProperty(i)){this.pack(i);let t=this.pack(e[i]);if(t instanceof Promise)return t.then(()=>r(n+1))}return r(n+1)}};return r(0)}pack_uint8(e){this._bufferBuilder.append(e)}pack_uint16(e){this._bufferBuilder.append(e>>8),this._bufferBuilder.append(255&e)}pack_uint32(e){let t=4294967295&e;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t)}pack_uint64(e){let t=e/4294967296,n=e%4294967296;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t),this._bufferBuilder.append((4278190080&n)>>>24),this._bufferBuilder.append((16711680&n)>>>16),this._bufferBuilder.append((65280&n)>>>8),this._bufferBuilder.append(255&n)}pack_int8(e){this._bufferBuilder.append(255&e)}pack_int16(e){this._bufferBuilder.append((65280&e)>>8),this._bufferBuilder.append(255&e)}pack_int32(e){this._bufferBuilder.append(e>>>24&255),this._bufferBuilder.append((16711680&e)>>>16),this._bufferBuilder.append((65280&e)>>>8),this._bufferBuilder.append(255&e)}pack_int64(e){let t=Math.floor(e/4294967296),n=e%4294967296;this._bufferBuilder.append((4278190080&t)>>>24),this._bufferBuilder.append((16711680&t)>>>16),this._bufferBuilder.append((65280&t)>>>8),this._bufferBuilder.append(255&t),this._bufferBuilder.append((4278190080&n)>>>24),this._bufferBuilder.append((16711680&n)>>>16),this._bufferBuilder.append((65280&n)>>>8),this._bufferBuilder.append(255&n)}constructor(){this._bufferBuilder=new r,this._textEncoder=new TextEncoder}}let c=!0,l=!0;function p(e,t,n){let r=e.match(t);return r&&r.length>=n&&parseInt(r[n],10)}function d(e,t,n){if(!e.RTCPeerConnection)return;let r=e.RTCPeerConnection.prototype,i=r.addEventListener;r.addEventListener=function(e,r){if(e!==t)return i.apply(this,arguments);let o=e=>{let t=n(e);t&&(r.handleEvent?r.handleEvent(t):r(t))};return this._eventMap=this._eventMap||{},this._eventMap[t]||(this._eventMap[t]=new Map),this._eventMap[t].set(r,o),i.apply(this,[e,o])};let o=r.removeEventListener;r.removeEventListener=function(e,n){if(e!==t||!this._eventMap||!this._eventMap[t]||!this._eventMap[t].has(n))return o.apply(this,arguments);let r=this._eventMap[t].get(n);return this._eventMap[t].delete(n),0===this._eventMap[t].size&&delete this._eventMap[t],0===Object.keys(this._eventMap).length&&delete this._eventMap,o.apply(this,[e,r])},Object.defineProperty(r,"on"+t,{get(){return this["_on"+t]},set(e){this["_on"+t]&&(this.removeEventListener(t,this["_on"+t]),delete this["_on"+t]),e&&this.addEventListener(t,this["_on"+t]=e)},enumerable:!0,configurable:!0})}function h(e){return"boolean"!=typeof e?Error("Argument type: "+typeof e+". Please use a boolean."):(c=e,e?"adapter.js logging disabled":"adapter.js logging enabled")}function u(e){return"boolean"!=typeof e?Error("Argument type: "+typeof e+". Please use a boolean."):(l=!e,"adapter.js deprecation warnings "+(e?"disabled":"enabled"))}function f(){"object"!=typeof window||c||"undefined"==typeof console||"function"!=typeof console.log||console.log.apply(console,arguments)}function m(e,t){l&&console.warn(e+" is deprecated, please use "+t+" instead.")}function g(e){return"[object Object]"===Object.prototype.toString.call(e)}function y(e,t,n){let r=n?"outbound-rtp":"inbound-rtp",i=new Map;if(null===t)return i;let o=[];return e.forEach(e=>{"track"===e.type&&e.trackIdentifier===t.id&&o.push(e)}),o.forEach(t=>{e.forEach(n=>{n.type===r&&n.trackId===t.id&&function e(t,n,r){!n||r.has(n.id)||(r.set(n.id,n),Object.keys(n).forEach(i=>{i.endsWith("Id")?e(t,t.get(n[i]),r):i.endsWith("Ids")&&n[i].forEach(n=>{e(t,t.get(n),r)})}))}(e,n,i)})}),i}var _,C,v,b,k,S,T,R,w,P,E,D,x,I,M,O,j={};function L(e,t){let n=e&&e.navigator;if(!n.mediaDevices)return;let r=function(e){if("object"!=typeof e||e.mandatory||e.optional)return e;let t={};return Object.keys(e).forEach(n=>{if("require"===n||"advanced"===n||"mediaSource"===n)return;let r="object"==typeof e[n]?e[n]:{ideal:e[n]};void 0!==r.exact&&"number"==typeof r.exact&&(r.min=r.max=r.exact);let i=function(e,t){return e?e+t.charAt(0).toUpperCase()+t.slice(1):"deviceId"===t?"sourceId":t};if(void 0!==r.ideal){t.optional=t.optional||[];let e={};"number"==typeof r.ideal?(e[i("min",n)]=r.ideal,t.optional.push(e),(e={})[i("max",n)]=r.ideal):e[i("",n)]=r.ideal,t.optional.push(e)}void 0!==r.exact&&"number"!=typeof r.exact?(t.mandatory=t.mandatory||{},t.mandatory[i("",n)]=r.exact):["min","max"].forEach(e=>{void 0!==r[e]&&(t.mandatory=t.mandatory||{},t.mandatory[i(e,n)]=r[e])})}),e.advanced&&(t.optional=(t.optional||[]).concat(e.advanced)),t},i=function(e,i){if(t.version>=61)return i(e);if((e=JSON.parse(JSON.stringify(e)))&&"object"==typeof e.audio){let t=function(e,t,n){t in e&&!(n in e)&&(e[n]=e[t],delete e[t])};t((e=JSON.parse(JSON.stringify(e))).audio,"autoGainControl","googAutoGainControl"),t(e.audio,"noiseSuppression","googNoiseSuppression"),e.audio=r(e.audio)}if(e&&"object"==typeof e.video){let o=e.video.facingMode;o=o&&("object"==typeof o?o:{ideal:o});let s=t.version<66;if(o&&("user"===o.exact||"environment"===o.exact||"user"===o.ideal||"environment"===o.ideal)&&!(n.mediaDevices.getSupportedConstraints&&n.mediaDevices.getSupportedConstraints().facingMode&&!s)){let t;if(delete e.video.facingMode,"environment"===o.exact||"environment"===o.ideal?t=["back","rear"]:("user"===o.exact||"user"===o.ideal)&&(t=["front"]),t)return n.mediaDevices.enumerateDevices().then(n=>{let s=(n=n.filter(e=>"videoinput"===e.kind)).find(e=>t.some(t=>e.label.toLowerCase().includes(t)));return!s&&n.length&&t.includes("back")&&(s=n[n.length-1]),s&&(e.video.deviceId=o.exact?{exact:s.deviceId}:{ideal:s.deviceId}),e.video=r(e.video),f("chrome: "+JSON.stringify(e)),i(e)})}e.video=r(e.video)}return f("chrome: "+JSON.stringify(e)),i(e)},o=function(e){return t.version>=64?e:{name:({PermissionDeniedError:"NotAllowedError",PermissionDismissedError:"NotAllowedError",InvalidStateError:"NotAllowedError",DevicesNotFoundError:"NotFoundError",ConstraintNotSatisfiedError:"OverconstrainedError",TrackStartError:"NotReadableError",MediaDeviceFailedDueToShutdown:"NotAllowedError",MediaDeviceKillSwitchOn:"NotAllowedError",TabCaptureError:"AbortError",ScreenCaptureError:"AbortError",DeviceCaptureError:"AbortError"})[e.name]||e.name,message:e.message,constraint:e.constraint||e.constraintName,toString(){return this.name+(this.message&&": ")+this.message}}};if(n.getUserMedia=(function(e,t,r){i(e,e=>{n.webkitGetUserMedia(e,t,e=>{r&&r(o(e))})})}).bind(n),n.mediaDevices.getUserMedia){let e=n.mediaDevices.getUserMedia.bind(n.mediaDevices);n.mediaDevices.getUserMedia=function(t){return i(t,t=>e(t).then(e=>{if(t.audio&&!e.getAudioTracks().length||t.video&&!e.getVideoTracks().length)throw e.getTracks().forEach(e=>{e.stop()}),new DOMException("","NotFoundError");return e},e=>Promise.reject(o(e))))}}}function A(e,t){if((!e.navigator.mediaDevices||!("getDisplayMedia"in e.navigator.mediaDevices))&&e.navigator.mediaDevices){if("function"!=typeof t){console.error("shimGetDisplayMedia: getSourceId argument is not a function");return}e.navigator.mediaDevices.getDisplayMedia=function(n){return t(n).then(t=>{let r=n.video&&n.video.width,i=n.video&&n.video.height,o=n.video&&n.video.frameRate;return n.video={mandatory:{chromeMediaSource:"desktop",chromeMediaSourceId:t,maxFrameRate:o||3}},r&&(n.video.mandatory.maxWidth=r),i&&(n.video.mandatory.maxHeight=i),e.navigator.mediaDevices.getUserMedia(n)})}}}function B(e){e.MediaStream=e.MediaStream||e.webkitMediaStream}function F(e){if("object"!=typeof e||!e.RTCPeerConnection||"ontrack"in e.RTCPeerConnection.prototype)d(e,"track",e=>(e.transceiver||Object.defineProperty(e,"transceiver",{value:{receiver:e.receiver}}),e));else{Object.defineProperty(e.RTCPeerConnection.prototype,"ontrack",{get(){return this._ontrack},set(e){this._ontrack&&this.removeEventListener("track",this._ontrack),this.addEventListener("track",this._ontrack=e)},enumerable:!0,configurable:!0});let t=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){return this._ontrackpoly||(this._ontrackpoly=t=>{t.stream.addEventListener("addtrack",n=>{let r;r=e.RTCPeerConnection.prototype.getReceivers?this.getReceivers().find(e=>e.track&&e.track.id===n.track.id):{track:n.track};let i=new Event("track");i.track=n.track,i.receiver=r,i.transceiver={receiver:r},i.streams=[t.stream],this.dispatchEvent(i)}),t.stream.getTracks().forEach(n=>{let r;r=e.RTCPeerConnection.prototype.getReceivers?this.getReceivers().find(e=>e.track&&e.track.id===n.id):{track:n};let i=new Event("track");i.track=n,i.receiver=r,i.transceiver={receiver:r},i.streams=[t.stream],this.dispatchEvent(i)})},this.addEventListener("addstream",this._ontrackpoly)),t.apply(this,arguments)}}}function U(e){if("object"==typeof e&&e.RTCPeerConnection&&!("getSenders"in e.RTCPeerConnection.prototype)&&"createDTMFSender"in e.RTCPeerConnection.prototype){let t=function(e,t){return{track:t,get dtmf(){return void 0===this._dtmf&&("audio"===t.kind?this._dtmf=e.createDTMFSender(t):this._dtmf=null),this._dtmf},_pc:e}};if(!e.RTCPeerConnection.prototype.getSenders){e.RTCPeerConnection.prototype.getSenders=function(){return this._senders=this._senders||[],this._senders.slice()};let n=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addTrack=function(e,r){let i=n.apply(this,arguments);return i||(i=t(this,e),this._senders.push(i)),i};let r=e.RTCPeerConnection.prototype.removeTrack;e.RTCPeerConnection.prototype.removeTrack=function(e){r.apply(this,arguments);let t=this._senders.indexOf(e);-1!==t&&this._senders.splice(t,1)}}let n=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(e){this._senders=this._senders||[],n.apply(this,[e]),e.getTracks().forEach(e=>{this._senders.push(t(this,e))})};let r=e.RTCPeerConnection.prototype.removeStream;e.RTCPeerConnection.prototype.removeStream=function(e){this._senders=this._senders||[],r.apply(this,[e]),e.getTracks().forEach(e=>{let t=this._senders.find(t=>t.track===e);t&&this._senders.splice(this._senders.indexOf(t),1)})}}else if("object"==typeof e&&e.RTCPeerConnection&&"getSenders"in e.RTCPeerConnection.prototype&&"createDTMFSender"in e.RTCPeerConnection.prototype&&e.RTCRtpSender&&!("dtmf"in e.RTCRtpSender.prototype)){let t=e.RTCPeerConnection.prototype.getSenders;e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e},Object.defineProperty(e.RTCRtpSender.prototype,"dtmf",{get(){return void 0===this._dtmf&&("audio"===this.track.kind?this._dtmf=this._pc.createDTMFSender(this.track):this._dtmf=null),this._dtmf}})}}function z(e){if(!e.RTCPeerConnection)return;let t=e.RTCPeerConnection.prototype.getStats;e.RTCPeerConnection.prototype.getStats=function(){let[e,n,r]=arguments;if(arguments.length>0&&"function"==typeof e)return t.apply(this,arguments);if(0===t.length&&(0==arguments.length||"function"!=typeof e))return t.apply(this,[]);let i=function(e){let t={};return e.result().forEach(e=>{let n={id:e.id,timestamp:e.timestamp,type:{localcandidate:"local-candidate",remotecandidate:"remote-candidate"}[e.type]||e.type};e.names().forEach(t=>{n[t]=e.stat(t)}),t[n.id]=n}),t},o=function(e){return new Map(Object.keys(e).map(t=>[t,e[t]]))};return arguments.length>=2?t.apply(this,[function(e){n(o(i(e)))},e]):new Promise((e,n)=>{t.apply(this,[function(t){e(o(i(t)))},n])}).then(n,r)}}function N(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender&&e.RTCRtpReceiver))return;if(!("getStats"in e.RTCRtpSender.prototype)){let t=e.RTCPeerConnection.prototype.getSenders;t&&(e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e});let n=e.RTCPeerConnection.prototype.addTrack;n&&(e.RTCPeerConnection.prototype.addTrack=function(){let e=n.apply(this,arguments);return e._pc=this,e}),e.RTCRtpSender.prototype.getStats=function(){let e=this;return this._pc.getStats().then(t=>y(t,e.track,!0))}}if(!("getStats"in e.RTCRtpReceiver.prototype)){let t=e.RTCPeerConnection.prototype.getReceivers;t&&(e.RTCPeerConnection.prototype.getReceivers=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e}),d(e,"track",e=>(e.receiver._pc=e.srcElement,e)),e.RTCRtpReceiver.prototype.getStats=function(){let e=this;return this._pc.getStats().then(t=>y(t,e.track,!1))}}if(!("getStats"in e.RTCRtpSender.prototype&&"getStats"in e.RTCRtpReceiver.prototype))return;let t=e.RTCPeerConnection.prototype.getStats;e.RTCPeerConnection.prototype.getStats=function(){if(arguments.length>0&&arguments[0]instanceof e.MediaStreamTrack){let e,t,n;let r=arguments[0];return(this.getSenders().forEach(t=>{t.track===r&&(e?n=!0:e=t)}),this.getReceivers().forEach(e=>(e.track===r&&(t?n=!0:t=e),e.track===r)),n||e&&t)?Promise.reject(new DOMException("There are more than one sender or receiver for the track.","InvalidAccessError")):e?e.getStats():t?t.getStats():Promise.reject(new DOMException("There is no sender or receiver for the track.","InvalidAccessError"))}return t.apply(this,arguments)}}function $(e){e.RTCPeerConnection.prototype.getLocalStreams=function(){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},Object.keys(this._shimmedLocalStreams).map(e=>this._shimmedLocalStreams[e][0])};let t=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addTrack=function(e,n){if(!n)return t.apply(this,arguments);this._shimmedLocalStreams=this._shimmedLocalStreams||{};let r=t.apply(this,arguments);return this._shimmedLocalStreams[n.id]?-1===this._shimmedLocalStreams[n.id].indexOf(r)&&this._shimmedLocalStreams[n.id].push(r):this._shimmedLocalStreams[n.id]=[n,r],r};let n=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(e){this._shimmedLocalStreams=this._shimmedLocalStreams||{},e.getTracks().forEach(e=>{if(this.getSenders().find(t=>t.track===e))throw new DOMException("Track already exists.","InvalidAccessError")});let t=this.getSenders();n.apply(this,arguments);let r=this.getSenders().filter(e=>-1===t.indexOf(e));this._shimmedLocalStreams[e.id]=[e].concat(r)};let r=e.RTCPeerConnection.prototype.removeStream;e.RTCPeerConnection.prototype.removeStream=function(e){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},delete this._shimmedLocalStreams[e.id],r.apply(this,arguments)};let i=e.RTCPeerConnection.prototype.removeTrack;e.RTCPeerConnection.prototype.removeTrack=function(e){return this._shimmedLocalStreams=this._shimmedLocalStreams||{},e&&Object.keys(this._shimmedLocalStreams).forEach(t=>{let n=this._shimmedLocalStreams[t].indexOf(e);-1!==n&&this._shimmedLocalStreams[t].splice(n,1),1===this._shimmedLocalStreams[t].length&&delete this._shimmedLocalStreams[t]}),i.apply(this,arguments)}}function J(e,t){if(!e.RTCPeerConnection)return;if(e.RTCPeerConnection.prototype.addTrack&&t.version>=65)return $(e);let n=e.RTCPeerConnection.prototype.getLocalStreams;e.RTCPeerConnection.prototype.getLocalStreams=function(){let e=n.apply(this);return this._reverseStreams=this._reverseStreams||{},e.map(e=>this._reverseStreams[e.id])};let r=e.RTCPeerConnection.prototype.addStream;e.RTCPeerConnection.prototype.addStream=function(t){if(this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{},t.getTracks().forEach(e=>{if(this.getSenders().find(t=>t.track===e))throw new DOMException("Track already exists.","InvalidAccessError")}),!this._reverseStreams[t.id]){let n=new e.MediaStream(t.getTracks());this._streams[t.id]=n,this._reverseStreams[n.id]=t,t=n}r.apply(this,[t])};let i=e.RTCPeerConnection.prototype.removeStream;function o(e,t){let n=t.sdp;return Object.keys(e._reverseStreams||[]).forEach(t=>{let r=e._reverseStreams[t],i=e._streams[r.id];n=n.replace(RegExp(i.id,"g"),r.id)}),new RTCSessionDescription({type:t.type,sdp:n})}e.RTCPeerConnection.prototype.removeStream=function(e){this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{},i.apply(this,[this._streams[e.id]||e]),delete this._reverseStreams[this._streams[e.id]?this._streams[e.id].id:e.id],delete this._streams[e.id]},e.RTCPeerConnection.prototype.addTrack=function(t,n){if("closed"===this.signalingState)throw new DOMException("The RTCPeerConnection's signalingState is 'closed'.","InvalidStateError");let r=[].slice.call(arguments,1);if(1!==r.length||!r[0].getTracks().find(e=>e===t))throw new DOMException("The adapter.js addTrack polyfill only supports a single  stream which is associated with the specified track.","NotSupportedError");if(this.getSenders().find(e=>e.track===t))throw new DOMException("Track already exists.","InvalidAccessError");this._streams=this._streams||{},this._reverseStreams=this._reverseStreams||{};let i=this._streams[n.id];if(i)i.addTrack(t),Promise.resolve().then(()=>{this.dispatchEvent(new Event("negotiationneeded"))});else{let r=new e.MediaStream([t]);this._streams[n.id]=r,this._reverseStreams[r.id]=n,this.addStream(r)}return this.getSenders().find(e=>e.track===t)},["createOffer","createAnswer"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){let e=arguments,t=arguments.length&&"function"==typeof arguments[0];return t?n.apply(this,[t=>{let n=o(this,t);e[0].apply(null,[n])},t=>{e[1]&&e[1].apply(null,t)},arguments[2]]):n.apply(this,arguments).then(e=>o(this,e))}})[t]});let s=e.RTCPeerConnection.prototype.setLocalDescription;e.RTCPeerConnection.prototype.setLocalDescription=function(){var e,t;let n;return arguments.length&&arguments[0].type&&(arguments[0]=(e=this,t=arguments[0],n=t.sdp,Object.keys(e._reverseStreams||[]).forEach(t=>{let r=e._reverseStreams[t],i=e._streams[r.id];n=n.replace(RegExp(r.id,"g"),i.id)}),new RTCSessionDescription({type:t.type,sdp:n}))),s.apply(this,arguments)};let a=Object.getOwnPropertyDescriptor(e.RTCPeerConnection.prototype,"localDescription");Object.defineProperty(e.RTCPeerConnection.prototype,"localDescription",{get(){let e=a.get.apply(this);return""===e.type?e:o(this,e)}}),e.RTCPeerConnection.prototype.removeTrack=function(e){let t;if("closed"===this.signalingState)throw new DOMException("The RTCPeerConnection's signalingState is 'closed'.","InvalidStateError");if(!e._pc)throw new DOMException("Argument 1 of RTCPeerConnection.removeTrack does not implement interface RTCRtpSender.","TypeError");if(e._pc!==this)throw new DOMException("Sender was not created by this connection.","InvalidAccessError");this._streams=this._streams||{},Object.keys(this._streams).forEach(n=>{this._streams[n].getTracks().find(t=>e.track===t)&&(t=this._streams[n])}),t&&(1===t.getTracks().length?this.removeStream(this._reverseStreams[t.id]):t.removeTrack(e.track),this.dispatchEvent(new Event("negotiationneeded")))}}function V(e,t){!e.RTCPeerConnection&&e.webkitRTCPeerConnection&&(e.RTCPeerConnection=e.webkitRTCPeerConnection),e.RTCPeerConnection&&t.version<53&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){return arguments[0]=new("addIceCandidate"===t?e.RTCIceCandidate:e.RTCSessionDescription)(arguments[0]),n.apply(this,arguments)}})[t]})}function G(e,t){d(e,"negotiationneeded",e=>{let n=e.target;if(!(t.version<72)&&(!n.getConfiguration||"plan-b"!==n.getConfiguration().sdpSemantics)||"stable"===n.signalingState)return e})}e(j,"shimMediaStream",()=>B),e(j,"shimOnTrack",()=>F),e(j,"shimGetSendersWithDtmf",()=>U),e(j,"shimGetStats",()=>z),e(j,"shimSenderReceiverGetStats",()=>N),e(j,"shimAddTrackRemoveTrackWithNative",()=>$),e(j,"shimAddTrackRemoveTrack",()=>J),e(j,"shimPeerConnection",()=>V),e(j,"fixNegotiationNeeded",()=>G),e(j,"shimGetUserMedia",()=>L),e(j,"shimGetDisplayMedia",()=>A);var W={};function H(e,t){let n=e&&e.navigator,r=e&&e.MediaStreamTrack;if(n.getUserMedia=function(e,t,r){m("navigator.getUserMedia","navigator.mediaDevices.getUserMedia"),n.mediaDevices.getUserMedia(e).then(t,r)},!(t.version>55&&"autoGainControl"in n.mediaDevices.getSupportedConstraints())){let e=function(e,t,n){t in e&&!(n in e)&&(e[n]=e[t],delete e[t])},t=n.mediaDevices.getUserMedia.bind(n.mediaDevices);if(n.mediaDevices.getUserMedia=function(n){return"object"==typeof n&&"object"==typeof n.audio&&(e((n=JSON.parse(JSON.stringify(n))).audio,"autoGainControl","mozAutoGainControl"),e(n.audio,"noiseSuppression","mozNoiseSuppression")),t(n)},r&&r.prototype.getSettings){let t=r.prototype.getSettings;r.prototype.getSettings=function(){let n=t.apply(this,arguments);return e(n,"mozAutoGainControl","autoGainControl"),e(n,"mozNoiseSuppression","noiseSuppression"),n}}if(r&&r.prototype.applyConstraints){let t=r.prototype.applyConstraints;r.prototype.applyConstraints=function(n){return"audio"===this.kind&&"object"==typeof n&&(e(n=JSON.parse(JSON.stringify(n)),"autoGainControl","mozAutoGainControl"),e(n,"noiseSuppression","mozNoiseSuppression")),t.apply(this,[n])}}}}function Y(e,t){e.navigator.mediaDevices&&"getDisplayMedia"in e.navigator.mediaDevices||!e.navigator.mediaDevices||(e.navigator.mediaDevices.getDisplayMedia=function(n){if(!(n&&n.video)){let e=new DOMException("getDisplayMedia without video constraints is undefined");return e.name="NotFoundError",e.code=8,Promise.reject(e)}return!0===n.video?n.video={mediaSource:t}:n.video.mediaSource=t,e.navigator.mediaDevices.getUserMedia(n)})}function K(e){"object"==typeof e&&e.RTCTrackEvent&&"receiver"in e.RTCTrackEvent.prototype&&!("transceiver"in e.RTCTrackEvent.prototype)&&Object.defineProperty(e.RTCTrackEvent.prototype,"transceiver",{get(){return{receiver:this.receiver}}})}function X(e,t){if("object"!=typeof e||!(e.RTCPeerConnection||e.mozRTCPeerConnection))return;!e.RTCPeerConnection&&e.mozRTCPeerConnection&&(e.RTCPeerConnection=e.mozRTCPeerConnection),t.version<53&&["setLocalDescription","setRemoteDescription","addIceCandidate"].forEach(function(t){let n=e.RTCPeerConnection.prototype[t];e.RTCPeerConnection.prototype[t]=({[t](){return arguments[0]=new("addIceCandidate"===t?e.RTCIceCandidate:e.RTCSessionDescription)(arguments[0]),n.apply(this,arguments)}})[t]});let n={inboundrtp:"inbound-rtp",outboundrtp:"outbound-rtp",candidatepair:"candidate-pair",localcandidate:"local-candidate",remotecandidate:"remote-candidate"},r=e.RTCPeerConnection.prototype.getStats;e.RTCPeerConnection.prototype.getStats=function(){let[e,i,o]=arguments;return r.apply(this,[e||null]).then(e=>{if(t.version<53&&!i)try{e.forEach(e=>{e.type=n[e.type]||e.type})}catch(t){if("TypeError"!==t.name)throw t;e.forEach((t,r)=>{e.set(r,Object.assign({},t,{type:n[t.type]||t.type}))})}return e}).then(i,o)}}function q(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender)||e.RTCRtpSender&&"getStats"in e.RTCRtpSender.prototype)return;let t=e.RTCPeerConnection.prototype.getSenders;t&&(e.RTCPeerConnection.prototype.getSenders=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e});let n=e.RTCPeerConnection.prototype.addTrack;n&&(e.RTCPeerConnection.prototype.addTrack=function(){let e=n.apply(this,arguments);return e._pc=this,e}),e.RTCRtpSender.prototype.getStats=function(){return this.track?this._pc.getStats(this.track):Promise.resolve(new Map)}}function Q(e){if(!("object"==typeof e&&e.RTCPeerConnection&&e.RTCRtpSender)||e.RTCRtpSender&&"getStats"in e.RTCRtpReceiver.prototype)return;let t=e.RTCPeerConnection.prototype.getReceivers;t&&(e.RTCPeerConnection.prototype.getReceivers=function(){let e=t.apply(this,[]);return e.forEach(e=>e._pc=this),e}),d(e,"track",e=>(e.receiver._pc=e.srcElement,e)),e.RTCRtpReceiver.prototype.getStats=function(){return this._pc.getStats(this.track)}}function Z(e){!e.RTCPeerConnection||"removeStream"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.removeStream=function(e){m("removeStream","removeTrack"),this.getSenders().forEach(t=>{t.track&&e.getTracks().includes(t.track)&&this.removeTrack(t)})})}function ee(e){e.DataChannel&&!e.RTCDataChannel&&(e.RTCDataChannel=e.DataChannel)}function et(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.addTransceiver;t&&(e.RTCPeerConnection.prototype.addTransceiver=function(){this.setParametersPromises=[];let e=arguments[1]&&arguments[1].sendEncodings;void 0===e&&(e=[]);let n=(e=[...e]).length>0;n&&e.forEach(e=>{if("rid"in e&&!/^[a-z0-9]{0,16}$/i.test(e.rid))throw TypeError("Invalid RID value provided.");if("scaleResolutionDownBy"in e&&!(parseFloat(e.scaleResolutionDownBy)>=1))throw RangeError("scale_resolution_down_by must be >= 1.0");if("maxFramerate"in e&&!(parseFloat(e.maxFramerate)>=0))throw RangeError("max_framerate must be >= 0.0")});let r=t.apply(this,arguments);if(n){let{sender:t}=r,n=t.getParameters();"encodings"in n&&(1!==n.encodings.length||0!==Object.keys(n.encodings[0]).length)||(n.encodings=e,t.sendEncodings=e,this.setParametersPromises.push(t.setParameters(n).then(()=>{delete t.sendEncodings}).catch(()=>{delete t.sendEncodings})))}return r})}function en(e){if(!("object"==typeof e&&e.RTCRtpSender))return;let t=e.RTCRtpSender.prototype.getParameters;t&&(e.RTCRtpSender.prototype.getParameters=function(){let e=t.apply(this,arguments);return"encodings"in e||(e.encodings=[].concat(this.sendEncodings||[{}])),e})}function er(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.createOffer;e.RTCPeerConnection.prototype.createOffer=function(){return this.setParametersPromises&&this.setParametersPromises.length?Promise.all(this.setParametersPromises).then(()=>t.apply(this,arguments)).finally(()=>{this.setParametersPromises=[]}):t.apply(this,arguments)}}function ei(e){if(!("object"==typeof e&&e.RTCPeerConnection))return;let t=e.RTCPeerConnection.prototype.createAnswer;e.RTCPeerConnection.prototype.createAnswer=function(){return this.setParametersPromises&&this.setParametersPromises.length?Promise.all(this.setParametersPromises).then(()=>t.apply(this,arguments)).finally(()=>{this.setParametersPromises=[]}):t.apply(this,arguments)}}e(W,"shimOnTrack",()=>K),e(W,"shimPeerConnection",()=>X),e(W,"shimSenderGetStats",()=>q),e(W,"shimReceiverGetStats",()=>Q),e(W,"shimRemoveStream",()=>Z),e(W,"shimRTCDataChannel",()=>ee),e(W,"shimAddTransceiver",()=>et),e(W,"shimGetParameters",()=>en),e(W,"shimCreateOffer",()=>er),e(W,"shimCreateAnswer",()=>ei),e(W,"shimGetUserMedia",()=>H),e(W,"shimGetDisplayMedia",()=>Y);var eo={};function es(e){if("object"==typeof e&&e.RTCPeerConnection){if("getLocalStreams"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.getLocalStreams=function(){return this._localStreams||(this._localStreams=[]),this._localStreams}),!("addStream"in e.RTCPeerConnection.prototype)){let t=e.RTCPeerConnection.prototype.addTrack;e.RTCPeerConnection.prototype.addStream=function(e){this._localStreams||(this._localStreams=[]),this._localStreams.includes(e)||this._localStreams.push(e),e.getAudioTracks().forEach(n=>t.call(this,n,e)),e.getVideoTracks().forEach(n=>t.call(this,n,e))},e.RTCPeerConnection.prototype.addTrack=function(e,...n){return n&&n.forEach(e=>{this._localStreams?this._localStreams.includes(e)||this._localStreams.push(e):this._localStreams=[e]}),t.apply(this,arguments)}}"removeStream"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.removeStream=function(e){this._localStreams||(this._localStreams=[]);let t=this._localStreams.indexOf(e);if(-1===t)return;this._localStreams.splice(t,1);let n=e.getTracks();this.getSenders().forEach(e=>{n.includes(e.track)&&this.removeTrack(e)})})}}function ea(e){if("object"==typeof e&&e.RTCPeerConnection&&("getRemoteStreams"in e.RTCPeerConnection.prototype||(e.RTCPeerConnection.prototype.getRemoteStreams=function(){return this._remoteStreams?this._remoteStreams:[]}),!("onaddstream"in e.RTCPeerConnection.prototype))){Object.defineProperty(e.RTCPeerConnection.prototype,"onaddstream",{get(){return this._onaddstream},set(e){this._onaddstream&&(this.removeEventListener("addstream",this._onaddstream),this.removeEventListener("track",this._onaddstreampoly)),this.addEventListener("addstream",this._onaddstream=e),this.addEventListener("track",this._onaddstreampoly=e=>{e.streams.forEach(e=>{if(this._remoteStreams||(this._remoteStreams=[]),this._remoteStreams.includes(e))return;this._remoteStreams.push(e);let t=new Event("addstream");t.stream=e,this.dispatchEvent(t)})})}});let t=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){let e=this;return this._onaddstreampoly||this.addEventListener("track",this._onaddstreampoly=function(t){t.streams.forEach(t=>{if(e._remoteStreams||(e._remoteStreams=[]),e._remoteStreams.indexOf(t)>=0)return;e._remoteStreams.push(t);let n=new Event("addstream");n.stream=t,e.dispatchEvent(n)})}),t.apply(e,arguments)}}}function ec(e){if("object"!=typeof e||!e.RTCPeerConnection)return;let t=e.RTCPeerConnection.prototype,n=t.createOffer,r=t.createAnswer,i=t.setLocalDescription,o=t.setRemoteDescription,s=t.addIceCandidate;t.createOffer=function(e,t){let r=arguments.length>=2?arguments[2]:arguments[0],i=n.apply(this,[r]);return t?(i.then(e,t),Promise.resolve()):i},t.createAnswer=function(e,t){let n=arguments.length>=2?arguments[2]:arguments[0],i=r.apply(this,[n]);return t?(i.then(e,t),Promise.resolve()):i};let a=function(e,t,n){let r=i.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r};t.setLocalDescription=a,a=function(e,t,n){let r=o.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r},t.setRemoteDescription=a,a=function(e,t,n){let r=s.apply(this,[e]);return n?(r.then(t,n),Promise.resolve()):r},t.addIceCandidate=a}function el(e){let t=e&&e.navigator;if(t.mediaDevices&&t.mediaDevices.getUserMedia){let e=t.mediaDevices,n=e.getUserMedia.bind(e);t.mediaDevices.getUserMedia=e=>n(ep(e))}!t.getUserMedia&&t.mediaDevices&&t.mediaDevices.getUserMedia&&(t.getUserMedia=(function(e,n,r){t.mediaDevices.getUserMedia(e).then(n,r)}).bind(t))}function ep(e){return e&&void 0!==e.video?Object.assign({},e,{video:function e(t){return g(t)?Object.keys(t).reduce(function(n,r){let i=g(t[r]),o=i?e(t[r]):t[r],s=i&&!Object.keys(o).length;return void 0===o||s?n:Object.assign(n,{[r]:o})},{}):t}(e.video)}):e}function ed(e){if(!e.RTCPeerConnection)return;let t=e.RTCPeerConnection;e.RTCPeerConnection=function(e,n){if(e&&e.iceServers){let t=[];for(let n=0;n<e.iceServers.length;n++){let r=e.iceServers[n];void 0===r.urls&&r.url?(m("RTCIceServer.url","RTCIceServer.urls"),(r=JSON.parse(JSON.stringify(r))).urls=r.url,delete r.url,t.push(r)):t.push(e.iceServers[n])}e.iceServers=t}return new t(e,n)},e.RTCPeerConnection.prototype=t.prototype,"generateCertificate"in t&&Object.defineProperty(e.RTCPeerConnection,"generateCertificate",{get:()=>t.generateCertificate})}function eh(e){"object"==typeof e&&e.RTCTrackEvent&&"receiver"in e.RTCTrackEvent.prototype&&!("transceiver"in e.RTCTrackEvent.prototype)&&Object.defineProperty(e.RTCTrackEvent.prototype,"transceiver",{get(){return{receiver:this.receiver}}})}function eu(e){let t=e.RTCPeerConnection.prototype.createOffer;e.RTCPeerConnection.prototype.createOffer=function(e){if(e){void 0!==e.offerToReceiveAudio&&(e.offerToReceiveAudio=!!e.offerToReceiveAudio);let t=this.getTransceivers().find(e=>"audio"===e.receiver.track.kind);!1===e.offerToReceiveAudio&&t?"sendrecv"===t.direction?t.setDirection?t.setDirection("sendonly"):t.direction="sendonly":"recvonly"===t.direction&&(t.setDirection?t.setDirection("inactive"):t.direction="inactive"):!0!==e.offerToReceiveAudio||t||this.addTransceiver("audio",{direction:"recvonly"}),void 0!==e.offerToReceiveVideo&&(e.offerToReceiveVideo=!!e.offerToReceiveVideo);let n=this.getTransceivers().find(e=>"video"===e.receiver.track.kind);!1===e.offerToReceiveVideo&&n?"sendrecv"===n.direction?n.setDirection?n.setDirection("sendonly"):n.direction="sendonly":"recvonly"===n.direction&&(n.setDirection?n.setDirection("inactive"):n.direction="inactive"):!0!==e.offerToReceiveVideo||n||this.addTransceiver("video",{direction:"recvonly"})}return t.apply(this,arguments)}}function ef(e){"object"!=typeof e||e.AudioContext||(e.AudioContext=e.webkitAudioContext)}e(eo,"shimLocalStreamsAPI",()=>es),e(eo,"shimRemoteStreamsAPI",()=>ea),e(eo,"shimCallbacksAPI",()=>ec),e(eo,"shimGetUserMedia",()=>el),e(eo,"shimConstraints",()=>ep),e(eo,"shimRTCIceServerUrls",()=>ed),e(eo,"shimTrackEventTransceiver",()=>eh),e(eo,"shimCreateOfferLegacy",()=>eu),e(eo,"shimAudioContext",()=>ef);var em={};e(em,"shimRTCIceCandidate",()=>e_),e(em,"shimRTCIceCandidateRelayProtocol",()=>eC),e(em,"shimMaxMessageSize",()=>ev),e(em,"shimSendThrowTypeError",()=>eb),e(em,"shimConnectionState",()=>ek),e(em,"removeExtmapAllowMixed",()=>eS),e(em,"shimAddIceCandidateNullOrEmpty",()=>eT),e(em,"shimParameterlessSetLocalDescription",()=>eR);var eg={};let ey={};function e_(e){if(!e.RTCIceCandidate||e.RTCIceCandidate&&"foundation"in e.RTCIceCandidate.prototype)return;let n=e.RTCIceCandidate;e.RTCIceCandidate=function(e){if("object"==typeof e&&e.candidate&&0===e.candidate.indexOf("a=")&&((e=JSON.parse(JSON.stringify(e))).candidate=e.candidate.substring(2)),e.candidate&&e.candidate.length){let r=new n(e),i=t(eg).parseCandidate(e.candidate);for(let e in i)e in r||Object.defineProperty(r,e,{value:i[e]});return r.toJSON=function(){return{candidate:r.candidate,sdpMid:r.sdpMid,sdpMLineIndex:r.sdpMLineIndex,usernameFragment:r.usernameFragment}},r}return new n(e)},e.RTCIceCandidate.prototype=n.prototype,d(e,"icecandidate",t=>(t.candidate&&Object.defineProperty(t,"candidate",{value:new e.RTCIceCandidate(t.candidate),writable:"false"}),t))}function eC(e){!e.RTCIceCandidate||e.RTCIceCandidate&&"relayProtocol"in e.RTCIceCandidate.prototype||d(e,"icecandidate",e=>{if(e.candidate){let n=t(eg).parseCandidate(e.candidate.candidate);"relay"===n.type&&(e.candidate.relayProtocol=({0:"tls",1:"tcp",2:"udp"})[n.priority>>24])}return e})}function ev(e,n){if(!e.RTCPeerConnection)return;"sctp"in e.RTCPeerConnection.prototype||Object.defineProperty(e.RTCPeerConnection.prototype,"sctp",{get(){return void 0===this._sctp?null:this._sctp}});let r=function(e){if(!e||!e.sdp)return!1;let n=t(eg).splitSections(e.sdp);return n.shift(),n.some(e=>{let n=t(eg).parseMLine(e);return n&&"application"===n.kind&&-1!==n.protocol.indexOf("SCTP")})},i=function(e){let t=e.sdp.match(/mozilla...THIS_IS_SDPARTA-(\d+)/);if(null===t||t.length<2)return -1;let n=parseInt(t[1],10);return n!=n?-1:n},o=function(e){let t=65536;return"firefox"===n.browser&&(t=n.version<57?-1===e?16384:2147483637:n.version<60?57===n.version?65535:65536:2147483637),t},s=function(e,r){let i=65536;"firefox"===n.browser&&57===n.version&&(i=65535);let o=t(eg).matchPrefix(e.sdp,"a=max-message-size:");return o.length>0?i=parseInt(o[0].substring(19),10):"firefox"===n.browser&&-1!==r&&(i=2147483637),i},a=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(){if(this._sctp=null,"chrome"===n.browser&&n.version>=76){let{sdpSemantics:e}=this.getConfiguration();"plan-b"===e&&Object.defineProperty(this,"sctp",{get(){return void 0===this._sctp?null:this._sctp},enumerable:!0,configurable:!0})}if(r(arguments[0])){let e;let t=i(arguments[0]),n=o(t),r=s(arguments[0],t);e=0===n&&0===r?Number.POSITIVE_INFINITY:0===n||0===r?Math.max(n,r):Math.min(n,r);let a={};Object.defineProperty(a,"maxMessageSize",{get:()=>e}),this._sctp=a}return a.apply(this,arguments)}}function eb(e){if(!(e.RTCPeerConnection&&"createDataChannel"in e.RTCPeerConnection.prototype))return;function t(e,t){let n=e.send;e.send=function(){let r=arguments[0],i=r.length||r.size||r.byteLength;if("open"===e.readyState&&t.sctp&&i>t.sctp.maxMessageSize)throw TypeError("Message too large (can send a maximum of "+t.sctp.maxMessageSize+" bytes)");return n.apply(e,arguments)}}let n=e.RTCPeerConnection.prototype.createDataChannel;e.RTCPeerConnection.prototype.createDataChannel=function(){let e=n.apply(this,arguments);return t(e,this),e},d(e,"datachannel",e=>(t(e.channel,e.target),e))}function ek(e){if(!e.RTCPeerConnection||"connectionState"in e.RTCPeerConnection.prototype)return;let t=e.RTCPeerConnection.prototype;Object.defineProperty(t,"connectionState",{get(){return({completed:"connected",checking:"connecting"})[this.iceConnectionState]||this.iceConnectionState},enumerable:!0,configurable:!0}),Object.defineProperty(t,"onconnectionstatechange",{get(){return this._onconnectionstatechange||null},set(e){this._onconnectionstatechange&&(this.removeEventListener("connectionstatechange",this._onconnectionstatechange),delete this._onconnectionstatechange),e&&this.addEventListener("connectionstatechange",this._onconnectionstatechange=e)},enumerable:!0,configurable:!0}),["setLocalDescription","setRemoteDescription"].forEach(e=>{let n=t[e];t[e]=function(){return this._connectionstatechangepoly||(this._connectionstatechangepoly=e=>{let t=e.target;if(t._lastConnectionState!==t.connectionState){t._lastConnectionState=t.connectionState;let n=new Event("connectionstatechange",e);t.dispatchEvent(n)}return e},this.addEventListener("iceconnectionstatechange",this._connectionstatechangepoly)),n.apply(this,arguments)}})}function eS(e,t){if(!e.RTCPeerConnection||"chrome"===t.browser&&t.version>=71||"safari"===t.browser&&t.version>=605)return;let n=e.RTCPeerConnection.prototype.setRemoteDescription;e.RTCPeerConnection.prototype.setRemoteDescription=function(t){if(t&&t.sdp&&-1!==t.sdp.indexOf("\na=extmap-allow-mixed")){let n=t.sdp.split("\n").filter(e=>"a=extmap-allow-mixed"!==e.trim()).join("\n");e.RTCSessionDescription&&t instanceof e.RTCSessionDescription?arguments[0]=new e.RTCSessionDescription({type:t.type,sdp:n}):t.sdp=n}return n.apply(this,arguments)}}function eT(e,t){if(!(e.RTCPeerConnection&&e.RTCPeerConnection.prototype))return;let n=e.RTCPeerConnection.prototype.addIceCandidate;n&&0!==n.length&&(e.RTCPeerConnection.prototype.addIceCandidate=function(){return arguments[0]?("chrome"===t.browser&&t.version<78||"firefox"===t.browser&&t.version<68||"safari"===t.browser)&&arguments[0]&&""===arguments[0].candidate?Promise.resolve():n.apply(this,arguments):(arguments[1]&&arguments[1].apply(null),Promise.resolve())})}function eR(e,t){if(!(e.RTCPeerConnection&&e.RTCPeerConnection.prototype))return;let n=e.RTCPeerConnection.prototype.setLocalDescription;n&&0!==n.length&&(e.RTCPeerConnection.prototype.setLocalDescription=function(){let e=arguments[0]||{};if("object"!=typeof e||e.type&&e.sdp)return n.apply(this,arguments);if(!(e={type:e.type,sdp:e.sdp}).type)switch(this.signalingState){case"stable":case"have-local-offer":case"have-remote-pranswer":e.type="offer";break;default:e.type="answer"}return e.sdp||"offer"!==e.type&&"answer"!==e.type?n.apply(this,[e]):("offer"===e.type?this.createOffer:this.createAnswer).apply(this).then(e=>n.apply(this,[e]))})}ey.generateIdentifier=function(){return Math.random().toString(36).substring(2,12)},ey.localCName=ey.generateIdentifier(),ey.splitLines=function(e){return e.trim().split("\n").map(e=>e.trim())},ey.splitSections=function(e){return e.split("\nm=").map((e,t)=>(t>0?"m="+e:e).trim()+"\r\n")},ey.getDescription=function(e){let t=ey.splitSections(e);return t&&t[0]},ey.getMediaSections=function(e){let t=ey.splitSections(e);return t.shift(),t},ey.matchPrefix=function(e,t){return ey.splitLines(e).filter(e=>0===e.indexOf(t))},ey.parseCandidate=function(e){let t;let n={foundation:(t=0===e.indexOf("a=candidate:")?e.substring(12).split(" "):e.substring(10).split(" "))[0],component:{1:"rtp",2:"rtcp"}[t[1]]||t[1],protocol:t[2].toLowerCase(),priority:parseInt(t[3],10),ip:t[4],address:t[4],port:parseInt(t[5],10),type:t[7]};for(let e=8;e<t.length;e+=2)switch(t[e]){case"raddr":n.relatedAddress=t[e+1];break;case"rport":n.relatedPort=parseInt(t[e+1],10);break;case"tcptype":n.tcpType=t[e+1];break;case"ufrag":n.ufrag=t[e+1],n.usernameFragment=t[e+1];break;default:void 0===n[t[e]]&&(n[t[e]]=t[e+1])}return n},ey.writeCandidate=function(e){let t=[];t.push(e.foundation);let n=e.component;"rtp"===n?t.push(1):"rtcp"===n?t.push(2):t.push(n),t.push(e.protocol.toUpperCase()),t.push(e.priority),t.push(e.address||e.ip),t.push(e.port);let r=e.type;return t.push("typ"),t.push(r),"host"!==r&&e.relatedAddress&&e.relatedPort&&(t.push("raddr"),t.push(e.relatedAddress),t.push("rport"),t.push(e.relatedPort)),e.tcpType&&"tcp"===e.protocol.toLowerCase()&&(t.push("tcptype"),t.push(e.tcpType)),(e.usernameFragment||e.ufrag)&&(t.push("ufrag"),t.push(e.usernameFragment||e.ufrag)),"candidate:"+t.join(" ")},ey.parseIceOptions=function(e){return e.substring(14).split(" ")},ey.parseRtpMap=function(e){let t=e.substring(9).split(" "),n={payloadType:parseInt(t.shift(),10)};return t=t[0].split("/"),n.name=t[0],n.clockRate=parseInt(t[1],10),n.channels=3===t.length?parseInt(t[2],10):1,n.numChannels=n.channels,n},ey.writeRtpMap=function(e){let t=e.payloadType;void 0!==e.preferredPayloadType&&(t=e.preferredPayloadType);let n=e.channels||e.numChannels||1;return"a=rtpmap:"+t+" "+e.name+"/"+e.clockRate+(1!==n?"/"+n:"")+"\r\n"},ey.parseExtmap=function(e){let t=e.substring(9).split(" ");return{id:parseInt(t[0],10),direction:t[0].indexOf("/")>0?t[0].split("/")[1]:"sendrecv",uri:t[1],attributes:t.slice(2).join(" ")}},ey.writeExtmap=function(e){return"a=extmap:"+(e.id||e.preferredId)+(e.direction&&"sendrecv"!==e.direction?"/"+e.direction:"")+" "+e.uri+(e.attributes?" "+e.attributes:"")+"\r\n"},ey.parseFmtp=function(e){let t;let n={},r=e.substring(e.indexOf(" ")+1).split(";");for(let e=0;e<r.length;e++)n[(t=r[e].trim().split("="))[0].trim()]=t[1];return n},ey.writeFmtp=function(e){let t="",n=e.payloadType;if(void 0!==e.preferredPayloadType&&(n=e.preferredPayloadType),e.parameters&&Object.keys(e.parameters).length){let r=[];Object.keys(e.parameters).forEach(t=>{void 0!==e.parameters[t]?r.push(t+"="+e.parameters[t]):r.push(t)}),t+="a=fmtp:"+n+" "+r.join(";")+"\r\n"}return t},ey.parseRtcpFb=function(e){let t=e.substring(e.indexOf(" ")+1).split(" ");return{type:t.shift(),parameter:t.join(" ")}},ey.writeRtcpFb=function(e){let t="",n=e.payloadType;return void 0!==e.preferredPayloadType&&(n=e.preferredPayloadType),e.rtcpFeedback&&e.rtcpFeedback.length&&e.rtcpFeedback.forEach(e=>{t+="a=rtcp-fb:"+n+" "+e.type+(e.parameter&&e.parameter.length?" "+e.parameter:"")+"\r\n"}),t},ey.parseSsrcMedia=function(e){let t=e.indexOf(" "),n={ssrc:parseInt(e.substring(7,t),10)},r=e.indexOf(":",t);return r>-1?(n.attribute=e.substring(t+1,r),n.value=e.substring(r+1)):n.attribute=e.substring(t+1),n},ey.parseSsrcGroup=function(e){let t=e.substring(13).split(" ");return{semantics:t.shift(),ssrcs:t.map(e=>parseInt(e,10))}},ey.getMid=function(e){let t=ey.matchPrefix(e,"a=mid:")[0];if(t)return t.substring(6)},ey.parseFingerprint=function(e){let t=e.substring(14).split(" ");return{algorithm:t[0].toLowerCase(),value:t[1].toUpperCase()}},ey.getDtlsParameters=function(e,t){return{role:"auto",fingerprints:ey.matchPrefix(e+t,"a=fingerprint:").map(ey.parseFingerprint)}},ey.writeDtlsParameters=function(e,t){let n="a=setup:"+t+"\r\n";return e.fingerprints.forEach(e=>{n+="a=fingerprint:"+e.algorithm+" "+e.value+"\r\n"}),n},ey.parseCryptoLine=function(e){let t=e.substring(9).split(" ");return{tag:parseInt(t[0],10),cryptoSuite:t[1],keyParams:t[2],sessionParams:t.slice(3)}},ey.writeCryptoLine=function(e){return"a=crypto:"+e.tag+" "+e.cryptoSuite+" "+("object"==typeof e.keyParams?ey.writeCryptoKeyParams(e.keyParams):e.keyParams)+(e.sessionParams?" "+e.sessionParams.join(" "):"")+"\r\n"},ey.parseCryptoKeyParams=function(e){if(0!==e.indexOf("inline:"))return null;let t=e.substring(7).split("|");return{keyMethod:"inline",keySalt:t[0],lifeTime:t[1],mkiValue:t[2]?t[2].split(":")[0]:void 0,mkiLength:t[2]?t[2].split(":")[1]:void 0}},ey.writeCryptoKeyParams=function(e){return e.keyMethod+":"+e.keySalt+(e.lifeTime?"|"+e.lifeTime:"")+(e.mkiValue&&e.mkiLength?"|"+e.mkiValue+":"+e.mkiLength:"")},ey.getCryptoParameters=function(e,t){return ey.matchPrefix(e+t,"a=crypto:").map(ey.parseCryptoLine)},ey.getIceParameters=function(e,t){let n=ey.matchPrefix(e+t,"a=ice-ufrag:")[0],r=ey.matchPrefix(e+t,"a=ice-pwd:")[0];return n&&r?{usernameFragment:n.substring(12),password:r.substring(10)}:null},ey.writeIceParameters=function(e){let t="a=ice-ufrag:"+e.usernameFragment+"\r\na=ice-pwd:"+e.password+"\r\n";return e.iceLite&&(t+="a=ice-lite\r\n"),t},ey.parseRtpParameters=function(e){let t={codecs:[],headerExtensions:[],fecMechanisms:[],rtcp:[]},n=ey.splitLines(e)[0].split(" ");t.profile=n[2];for(let r=3;r<n.length;r++){let i=n[r],o=ey.matchPrefix(e,"a=rtpmap:"+i+" ")[0];if(o){let n=ey.parseRtpMap(o),r=ey.matchPrefix(e,"a=fmtp:"+i+" ");switch(n.parameters=r.length?ey.parseFmtp(r[0]):{},n.rtcpFeedback=ey.matchPrefix(e,"a=rtcp-fb:"+i+" ").map(ey.parseRtcpFb),t.codecs.push(n),n.name.toUpperCase()){case"RED":case"ULPFEC":t.fecMechanisms.push(n.name.toUpperCase())}}}ey.matchPrefix(e,"a=extmap:").forEach(e=>{t.headerExtensions.push(ey.parseExtmap(e))});let r=ey.matchPrefix(e,"a=rtcp-fb:* ").map(ey.parseRtcpFb);return t.codecs.forEach(e=>{r.forEach(t=>{e.rtcpFeedback.find(e=>e.type===t.type&&e.parameter===t.parameter)||e.rtcpFeedback.push(t)})}),t},ey.writeRtpDescription=function(e,t){let n="";n+="m="+e+" "+(t.codecs.length>0?"9":"0")+" "+(t.profile||"UDP/TLS/RTP/SAVPF")+" "+t.codecs.map(e=>void 0!==e.preferredPayloadType?e.preferredPayloadType:e.payloadType).join(" ")+"\r\nc=IN IP4 0.0.0.0\r\na=rtcp:9 IN IP4 0.0.0.0\r\n",t.codecs.forEach(e=>{n+=ey.writeRtpMap(e)+ey.writeFmtp(e)+ey.writeRtcpFb(e)});let r=0;return t.codecs.forEach(e=>{e.maxptime>r&&(r=e.maxptime)}),r>0&&(n+="a=maxptime:"+r+"\r\n"),t.headerExtensions&&t.headerExtensions.forEach(e=>{n+=ey.writeExtmap(e)}),n},ey.parseRtpEncodingParameters=function(e){let t;let n=[],r=ey.parseRtpParameters(e),i=-1!==r.fecMechanisms.indexOf("RED"),o=-1!==r.fecMechanisms.indexOf("ULPFEC"),s=ey.matchPrefix(e,"a=ssrc:").map(e=>ey.parseSsrcMedia(e)).filter(e=>"cname"===e.attribute),a=s.length>0&&s[0].ssrc,c=ey.matchPrefix(e,"a=ssrc-group:FID").map(e=>e.substring(17).split(" ").map(e=>parseInt(e,10)));c.length>0&&c[0].length>1&&c[0][0]===a&&(t=c[0][1]),r.codecs.forEach(e=>{if("RTX"===e.name.toUpperCase()&&e.parameters.apt){let r={ssrc:a,codecPayloadType:parseInt(e.parameters.apt,10)};a&&t&&(r.rtx={ssrc:t}),n.push(r),i&&((r=JSON.parse(JSON.stringify(r))).fec={ssrc:a,mechanism:o?"red+ulpfec":"red"},n.push(r))}}),0===n.length&&a&&n.push({ssrc:a});let l=ey.matchPrefix(e,"b=");return l.length&&(l=0===l[0].indexOf("b=TIAS:")?parseInt(l[0].substring(7),10):0===l[0].indexOf("b=AS:")?950*parseInt(l[0].substring(5),10)-16e3:void 0,n.forEach(e=>{e.maxBitrate=l})),n},ey.parseRtcpParameters=function(e){let t={},n=ey.matchPrefix(e,"a=ssrc:").map(e=>ey.parseSsrcMedia(e)).filter(e=>"cname"===e.attribute)[0];n&&(t.cname=n.value,t.ssrc=n.ssrc);let r=ey.matchPrefix(e,"a=rtcp-rsize");t.reducedSize=r.length>0,t.compound=0===r.length;let i=ey.matchPrefix(e,"a=rtcp-mux");return t.mux=i.length>0,t},ey.writeRtcpParameters=function(e){let t="";return e.reducedSize&&(t+="a=rtcp-rsize\r\n"),e.mux&&(t+="a=rtcp-mux\r\n"),void 0!==e.ssrc&&e.cname&&(t+="a=ssrc:"+e.ssrc+" cname:"+e.cname+"\r\n"),t},ey.parseMsid=function(e){let t;let n=ey.matchPrefix(e,"a=msid:");if(1===n.length)return{stream:(t=n[0].substring(7).split(" "))[0],track:t[1]};let r=ey.matchPrefix(e,"a=ssrc:").map(e=>ey.parseSsrcMedia(e)).filter(e=>"msid"===e.attribute);if(r.length>0)return{stream:(t=r[0].value.split(" "))[0],track:t[1]}},ey.parseSctpDescription=function(e){let t;let n=ey.parseMLine(e),r=ey.matchPrefix(e,"a=max-message-size:");r.length>0&&(t=parseInt(r[0].substring(19),10)),isNaN(t)&&(t=65536);let i=ey.matchPrefix(e,"a=sctp-port:");if(i.length>0)return{port:parseInt(i[0].substring(12),10),protocol:n.fmt,maxMessageSize:t};let o=ey.matchPrefix(e,"a=sctpmap:");if(o.length>0){let e=o[0].substring(10).split(" ");return{port:parseInt(e[0],10),protocol:e[1],maxMessageSize:t}}},ey.writeSctpDescription=function(e,t){let n=[];return n="DTLS/SCTP"!==e.protocol?["m="+e.kind+" 9 "+e.protocol+" "+t.protocol+"\r\n","c=IN IP4 0.0.0.0\r\n","a=sctp-port:"+t.port+"\r\n"]:["m="+e.kind+" 9 "+e.protocol+" "+t.port+"\r\n","c=IN IP4 0.0.0.0\r\n","a=sctpmap:"+t.port+" "+t.protocol+" 65535\r\n"],void 0!==t.maxMessageSize&&n.push("a=max-message-size:"+t.maxMessageSize+"\r\n"),n.join("")},ey.generateSessionId=function(){return Math.random().toString().substr(2,22)},ey.writeSessionBoilerplate=function(e,t,n){return"v=0\r\no="+(n||"thisisadapterortc")+" "+(e||ey.generateSessionId())+" "+(void 0!==t?t:2)+" IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\n"},ey.getDirection=function(e,t){let n=ey.splitLines(e);for(let e=0;e<n.length;e++)switch(n[e]){case"a=sendrecv":case"a=sendonly":case"a=recvonly":case"a=inactive":return n[e].substring(2)}return t?ey.getDirection(t):"sendrecv"},ey.getKind=function(e){return ey.splitLines(e)[0].split(" ")[0].substring(2)},ey.isRejected=function(e){return"0"===e.split(" ",2)[1]},ey.parseMLine=function(e){let t=ey.splitLines(e)[0].substring(2).split(" ");return{kind:t[0],port:parseInt(t[1],10),protocol:t[2],fmt:t.slice(3).join(" ")}},ey.parseOLine=function(e){let t=ey.matchPrefix(e,"o=")[0].substring(2).split(" ");return{username:t[0],sessionId:t[1],sessionVersion:parseInt(t[2],10),netType:t[3],addressType:t[4],address:t[5]}},ey.isValidSDP=function(e){if("string"!=typeof e||0===e.length)return!1;let t=ey.splitLines(e);for(let e=0;e<t.length;e++)if(t[e].length<2||"="!==t[e].charAt(1))return!1;return!0},eg=ey;let ew=function({window:e}={},t={shimChrome:!0,shimFirefox:!0,shimSafari:!0}){let n=function(e){let t={browser:null,version:null};if(void 0===e||!e.navigator||!e.navigator.userAgent)return t.browser="Not a browser.",t;let{navigator:n}=e;return n.mozGetUserMedia?(t.browser="firefox",t.version=p(n.userAgent,/Firefox\/(\d+)\./,1)):n.webkitGetUserMedia||!1===e.isSecureContext&&e.webkitRTCPeerConnection?(t.browser="chrome",t.version=p(n.userAgent,/Chrom(e|ium)\/(\d+)\./,2)):e.RTCPeerConnection&&n.userAgent.match(/AppleWebKit\/(\d+)\./)?(t.browser="safari",t.version=p(n.userAgent,/AppleWebKit\/(\d+)\./,1),t.supportsUnifiedPlan=e.RTCRtpTransceiver&&"currentDirection"in e.RTCRtpTransceiver.prototype):t.browser="Not a supported browser.",t}(e),r={browserDetails:n,commonShim:em,extractVersion:p,disableLog:h,disableWarnings:u,sdp:eg};switch(n.browser){case"chrome":if(!j||!j.shimPeerConnection||!t.shimChrome){f("Chrome shim is not included in this adapter release.");break}if(null===n.version){f("Chrome shim can not determine version, not shimming.");break}f("adapter.js shimming chrome."),r.browserShim=j,eT(e,n),eR(e,n),j.shimGetUserMedia(e,n),j.shimMediaStream(e,n),j.shimPeerConnection(e,n),j.shimOnTrack(e,n),j.shimAddTrackRemoveTrack(e,n),j.shimGetSendersWithDtmf(e,n),j.shimGetStats(e,n),j.shimSenderReceiverGetStats(e,n),j.fixNegotiationNeeded(e,n),e_(e,n),eC(e,n),ek(e,n),ev(e,n),eb(e,n),eS(e,n);break;case"firefox":if(!W||!W.shimPeerConnection||!t.shimFirefox){f("Firefox shim is not included in this adapter release.");break}f("adapter.js shimming firefox."),r.browserShim=W,eT(e,n),eR(e,n),W.shimGetUserMedia(e,n),W.shimPeerConnection(e,n),W.shimOnTrack(e,n),W.shimRemoveStream(e,n),W.shimSenderGetStats(e,n),W.shimReceiverGetStats(e,n),W.shimRTCDataChannel(e,n),W.shimAddTransceiver(e,n),W.shimGetParameters(e,n),W.shimCreateOffer(e,n),W.shimCreateAnswer(e,n),e_(e,n),ek(e,n),ev(e,n),eb(e,n);break;case"safari":if(!eo||!t.shimSafari){f("Safari shim is not included in this adapter release.");break}f("adapter.js shimming safari."),r.browserShim=eo,eT(e,n),eR(e,n),eo.shimRTCIceServerUrls(e,n),eo.shimCreateOfferLegacy(e,n),eo.shimCallbacksAPI(e,n),eo.shimLocalStreamsAPI(e,n),eo.shimRemoteStreamsAPI(e,n),eo.shimTrackEventTransceiver(e,n),eo.shimGetUserMedia(e,n),eo.shimAudioContext(e,n),e_(e,n),eC(e,n),ev(e,n),eb(e,n),eS(e,n);break;default:f("Unsupported browser!")}return r}({window:"undefined"==typeof window?void 0:window}),eP=ew.default||ew,eE=new class{isWebRTCSupported(){return"undefined"!=typeof RTCPeerConnection}isBrowserSupported(){let e=this.getBrowser(),t=this.getVersion();return!!this.supportedBrowsers.includes(e)&&("chrome"===e?t>=this.minChromeVersion:"firefox"===e?t>=this.minFirefoxVersion:"safari"===e&&!this.isIOS&&t>=this.minSafariVersion)}getBrowser(){return eP.browserDetails.browser}getVersion(){return eP.browserDetails.version||0}isUnifiedPlanSupported(){let e;let t=this.getBrowser(),n=eP.browserDetails.version||0;if("chrome"===t&&n<this.minChromeVersion)return!1;if("firefox"===t&&n>=this.minFirefoxVersion)return!0;if(!window.RTCRtpTransceiver||!("currentDirection"in RTCRtpTransceiver.prototype))return!1;let r=!1;try{(e=new RTCPeerConnection).addTransceiver("audio"),r=!0}catch(e){}finally{e&&e.close()}return r}toString(){return`Supports:
+    browser:${this.getBrowser()}
+    version:${this.getVersion()}
+    isIOS:${this.isIOS}
+    isWebRTCSupported:${this.isWebRTCSupported()}
+    isBrowserSupported:${this.isBrowserSupported()}
+    isUnifiedPlanSupported:${this.isUnifiedPlanSupported()}`}constructor(){this.isIOS=["iPad","iPhone","iPod"].includes(navigator.platform),this.supportedBrowsers=["firefox","chrome","safari"],this.minFirefoxVersion=59,this.minChromeVersion=72,this.minSafariVersion=605}},eD=e=>!e||/^[A-Za-z0-9]+(?:[ _-][A-Za-z0-9]+)*$/.test(e),ex=()=>Math.random().toString(36).slice(2),eI={iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:["turn:eu-0.turn.peerjs.com:3478","turn:us-0.turn.peerjs.com:3478"],username:"peerjs",credential:"peerjsp"}],sdpSemantics:"unified-plan"},eM=new class extends n{noop(){}blobToArrayBuffer(e,t){let n=new FileReader;return n.onload=function(e){e.target&&t(e.target.result)},n.readAsArrayBuffer(e),n}binaryStringToArrayBuffer(e){let t=new Uint8Array(e.length);for(let n=0;n<e.length;n++)t[n]=255&e.charCodeAt(n);return t.buffer}isSecure(){return"https:"===location.protocol}constructor(...e){super(...e),this.CLOUD_HOST="0.peerjs.com",this.CLOUD_PORT=443,this.chunkedBrowsers={Chrome:1,chrome:1},this.defaultConfig=eI,this.browser=eE.getBrowser(),this.browserVersion=eE.getVersion(),this.pack=o,this.unpack=i,this.supports=function(){let e;let t={browser:eE.isBrowserSupported(),webRTC:eE.isWebRTCSupported(),audioVideo:!1,data:!1,binaryBlob:!1,reliable:!1};if(!t.webRTC)return t;try{let n;e=new RTCPeerConnection(eI),t.audioVideo=!0;try{n=e.createDataChannel("_PEERJSTEST",{ordered:!0}),t.data=!0,t.reliable=!!n.ordered;try{n.binaryType="blob",t.binaryBlob=!eE.isIOS}catch(e){}}catch(e){}finally{n&&n.close()}}catch(e){}finally{e&&e.close()}return t}(),this.validateId=eD,this.randomToken=ex}};(_=w||(w={}))[_.Disabled=0]="Disabled",_[_.Errors=1]="Errors",_[_.Warnings=2]="Warnings",_[_.All=3]="All";var eO=new class{get logLevel(){return this._logLevel}set logLevel(e){this._logLevel=e}log(...e){this._logLevel>=3&&this._print(3,...e)}warn(...e){this._logLevel>=2&&this._print(2,...e)}error(...e){this._logLevel>=1&&this._print(1,...e)}setLogFunction(e){this._print=e}_print(e,...t){let n=["PeerJS: ",...t];for(let e in n)n[e]instanceof Error&&(n[e]="("+n[e].name+") "+n[e].message);e>=3?console.log(...n):e>=2?console.warn("WARNING",...n):e>=1&&console.error("ERROR",...n)}constructor(){this._logLevel=0}},ej={},eL=Object.prototype.hasOwnProperty,eA="~";function eB(){}function eF(e,t,n){this.fn=e,this.context=t,this.once=n||!1}function eU(e,t,n,r,i){if("function"!=typeof n)throw TypeError("The listener must be a function");var o=new eF(n,r||e,i),s=eA?eA+t:t;return e._events[s]?e._events[s].fn?e._events[s]=[e._events[s],o]:e._events[s].push(o):(e._events[s]=o,e._eventsCount++),e}function ez(e,t){0==--e._eventsCount?e._events=new eB:delete e._events[t]}function eN(){this._events=new eB,this._eventsCount=0}Object.create&&(eB.prototype=Object.create(null),new eB().__proto__||(eA=!1)),eN.prototype.eventNames=function(){var e,t,n=[];if(0===this._eventsCount)return n;for(t in e=this._events)eL.call(e,t)&&n.push(eA?t.slice(1):t);return Object.getOwnPropertySymbols?n.concat(Object.getOwnPropertySymbols(e)):n},eN.prototype.listeners=function(e){var t=eA?eA+e:e,n=this._events[t];if(!n)return[];if(n.fn)return[n.fn];for(var r=0,i=n.length,o=Array(i);r<i;r++)o[r]=n[r].fn;return o},eN.prototype.listenerCount=function(e){var t=eA?eA+e:e,n=this._events[t];return n?n.fn?1:n.length:0},eN.prototype.emit=function(e,t,n,r,i,o){var s=eA?eA+e:e;if(!this._events[s])return!1;var a,c,l=this._events[s],p=arguments.length;if(l.fn){switch(l.once&&this.removeListener(e,l.fn,void 0,!0),p){case 1:return l.fn.call(l.context),!0;case 2:return l.fn.call(l.context,t),!0;case 3:return l.fn.call(l.context,t,n),!0;case 4:return l.fn.call(l.context,t,n,r),!0;case 5:return l.fn.call(l.context,t,n,r,i),!0;case 6:return l.fn.call(l.context,t,n,r,i,o),!0}for(c=1,a=Array(p-1);c<p;c++)a[c-1]=arguments[c];l.fn.apply(l.context,a)}else{var d,h=l.length;for(c=0;c<h;c++)switch(l[c].once&&this.removeListener(e,l[c].fn,void 0,!0),p){case 1:l[c].fn.call(l[c].context);break;case 2:l[c].fn.call(l[c].context,t);break;case 3:l[c].fn.call(l[c].context,t,n);break;case 4:l[c].fn.call(l[c].context,t,n,r);break;default:if(!a)for(d=1,a=Array(p-1);d<p;d++)a[d-1]=arguments[d];l[c].fn.apply(l[c].context,a)}}return!0},eN.prototype.on=function(e,t,n){return eU(this,e,t,n,!1)},eN.prototype.once=function(e,t,n){return eU(this,e,t,n,!0)},eN.prototype.removeListener=function(e,t,n,r){var i=eA?eA+e:e;if(!this._events[i])return this;if(!t)return ez(this,i),this;var o=this._events[i];if(o.fn)o.fn!==t||r&&!o.once||n&&o.context!==n||ez(this,i);else{for(var s=0,a=[],c=o.length;s<c;s++)(o[s].fn!==t||r&&!o[s].once||n&&o[s].context!==n)&&a.push(o[s]);a.length?this._events[i]=1===a.length?a[0]:a:ez(this,i)}return this},eN.prototype.removeAllListeners=function(e){var t;return e?(t=eA?eA+e:e,this._events[t]&&ez(this,t)):(this._events=new eB,this._eventsCount=0),this},eN.prototype.off=eN.prototype.removeListener,eN.prototype.addListener=eN.prototype.on,eN.prefixed=eA,eN.EventEmitter=eN,ej=eN,(C=P||(P={})).Data="data",C.Media="media",(v=E||(E={})).BrowserIncompatible="browser-incompatible",v.Disconnected="disconnected",v.InvalidID="invalid-id",v.InvalidKey="invalid-key",v.Network="network",v.PeerUnavailable="peer-unavailable",v.SslUnavailable="ssl-unavailable",v.ServerError="server-error",v.SocketError="socket-error",v.SocketClosed="socket-closed",v.UnavailableID="unavailable-id",v.WebRTC="webrtc",(b=D||(D={})).NegotiationFailed="negotiation-failed",b.ConnectionClosed="connection-closed",(k=x||(x={})).NotOpenYet="not-open-yet",k.MessageToBig="message-too-big",(S=I||(I={})).Binary="binary",S.BinaryUTF8="binary-utf8",S.JSON="json",S.None="raw",(T=M||(M={})).Message="message",T.Disconnected="disconnected",T.Error="error",T.Close="close",(R=O||(O={})).Heartbeat="HEARTBEAT",R.Candidate="CANDIDATE",R.Offer="OFFER",R.Answer="ANSWER",R.Open="OPEN",R.Error="ERROR",R.IdTaken="ID-TAKEN",R.InvalidKey="INVALID-KEY",R.Leave="LEAVE",R.Expire="EXPIRE";var e$={};e$=JSON.parse('{"name":"peerjs","version":"1.5.2","keywords":["peerjs","webrtc","p2p","rtc"],"description":"PeerJS client","homepage":"https://peerjs.com","bugs":{"url":"https://github.com/peers/peerjs/issues"},"repository":{"type":"git","url":"https://github.com/peers/peerjs"},"license":"MIT","contributors":["Michelle Bu <michelle@michellebu.com>","afrokick <devbyru@gmail.com>","ericz <really.ez@gmail.com>","Jairo <kidandcat@gmail.com>","Jonas Gloning <34194370+jonasgloning@users.noreply.github.com>","Jairo Caro-Accino Viciana <jairo@galax.be>","Carlos Caballero <carlos.caballero.gonzalez@gmail.com>","hc <hheennrryy@gmail.com>","Muhammad Asif <capripio@gmail.com>","PrashoonB <prashoonbhattacharjee@gmail.com>","Harsh Bardhan Mishra <47351025+HarshCasper@users.noreply.github.com>","akotynski <aleksanderkotbury@gmail.com>","lmb <i@lmb.io>","Jairooo <jairocaro@msn.com>","Moritz Stückler <moritz.stueckler@gmail.com>","Simon <crydotsnakegithub@gmail.com>","Denis Lukov <denismassters@gmail.com>","Philipp Hancke <fippo@andyet.net>","Hans Oksendahl <hansoksendahl@gmail.com>","Jess <jessachandler@gmail.com>","khankuan <khankuan@gmail.com>","DUODVK <kurmanov.work@gmail.com>","XiZhao <kwang1imsa@gmail.com>","Matthias Lohr <matthias@lohr.me>","=frank tree <=frnktrb@googlemail.com>","Andre Eckardt <aeckardt@outlook.com>","Chris Cowan <agentme49@gmail.com>","Alex Chuev <alex@chuev.com>","alxnull <alxnull@e.mail.de>","Yemel Jardi <angel.jardi@gmail.com>","Ben Parnell <benjaminparnell.94@gmail.com>","Benny Lichtner <bennlich@gmail.com>","fresheneesz <bitetrudpublic@gmail.com>","bob.barstead@exaptive.com <bob.barstead@exaptive.com>","chandika <chandika@gmail.com>","emersion <contact@emersion.fr>","Christopher Van <cvan@users.noreply.github.com>","eddieherm <edhermoso@gmail.com>","Eduardo Pinho <enet4mikeenet@gmail.com>","Evandro Zanatta <ezanatta@tray.net.br>","Gardner Bickford <gardner@users.noreply.github.com>","Gian Luca <gianluca.cecchi@cynny.com>","PatrickJS <github@gdi2290.com>","jonnyf <github@jonathanfoss.co.uk>","Hizkia Felix <hizkifw@gmail.com>","Hristo Oskov <hristo.oskov@gmail.com>","Isaac Madwed <i.madwed@gmail.com>","Ilya Konanykhin <ilya.konanykhin@gmail.com>","jasonbarry <jasbarry@me.com>","Jonathan Burke <jonathan.burke.1311@googlemail.com>","Josh Hamit <josh.hamit@gmail.com>","Jordan Austin <jrax86@gmail.com>","Joel Wetzell <jwetzell@yahoo.com>","xizhao <kevin.wang@cloudera.com>","Alberto Torres <kungfoobar@gmail.com>","Jonathan Mayol <mayoljonathan@gmail.com>","Jefferson Felix <me@jsfelix.dev>","Rolf Erik Lekang <me@rolflekang.com>","Kevin Mai-Husan Chia <mhchia@users.noreply.github.com>","Pepijn de Vos <pepijndevos@gmail.com>","JooYoung <qkdlql@naver.com>","Tobias Speicher <rootcommander@gmail.com>","Steve Blaurock <sblaurock@gmail.com>","Kyrylo Shegeda <shegeda@ualberta.ca>","Diwank Singh Tomer <singh@diwank.name>","Sören Balko <Soeren.Balko@gmail.com>","Arpit Solanki <solankiarpit1997@gmail.com>","Yuki Ito <yuki@gnnk.net>","Artur Zayats <zag2art@gmail.com>"],"funding":{"type":"opencollective","url":"https://opencollective.com/peer"},"collective":{"type":"opencollective","url":"https://opencollective.com/peer"},"files":["dist/*"],"sideEffects":["lib/global.ts","lib/supports.ts"],"main":"dist/bundler.cjs","module":"dist/bundler.mjs","browser-minified":"dist/peerjs.min.js","browser-unminified":"dist/peerjs.js","browser-minified-cbor":"dist/serializer.cbor.mjs","browser-minified-msgpack":"dist/serializer.msgpack.mjs","types":"dist/types.d.ts","engines":{"node":">= 14"},"targets":{"types":{"source":"lib/exports.ts"},"main":{"source":"lib/exports.ts","sourceMap":{"inlineSources":true}},"module":{"source":"lib/exports.ts","includeNodeModules":["eventemitter3"],"sourceMap":{"inlineSources":true}},"browser-minified":{"context":"browser","outputFormat":"global","optimize":true,"engines":{"browsers":"chrome >= 83, edge >= 83, firefox >= 80, safari >= 15"},"source":"lib/global.ts"},"browser-unminified":{"context":"browser","outputFormat":"global","optimize":false,"engines":{"browsers":"chrome >= 83, edge >= 83, firefox >= 80, safari >= 15"},"source":"lib/global.ts"},"browser-minified-cbor":{"context":"browser","outputFormat":"esmodule","isLibrary":true,"optimize":true,"engines":{"browsers":"chrome >= 83, edge >= 83, firefox >= 102, safari >= 15"},"source":"lib/dataconnection/StreamConnection/Cbor.ts"},"browser-minified-msgpack":{"context":"browser","outputFormat":"esmodule","isLibrary":true,"optimize":true,"engines":{"browsers":"chrome >= 83, edge >= 83, firefox >= 102, safari >= 15"},"source":"lib/dataconnection/StreamConnection/MsgPack.ts"}},"scripts":{"contributors":"git-authors-cli --print=false && prettier --write package.json && git add package.json package-lock.json && git commit -m \\"chore(contributors): update and sort contributors list\\"","check":"tsc --noEmit && tsc -p e2e/tsconfig.json --noEmit","watch":"parcel watch","build":"rm -rf dist && parcel build","prepublishOnly":"npm run build","test":"jest","test:watch":"jest --watch","coverage":"jest --coverage --collectCoverageFrom=\\"./lib/**\\"","format":"prettier --write .","format:check":"prettier --check .","semantic-release":"semantic-release","e2e":"wdio run e2e/wdio.local.conf.ts","e2e:bstack":"wdio run e2e/wdio.bstack.conf.ts"},"devDependencies":{"@parcel/config-default":"^2.9.3","@parcel/packager-ts":"^2.9.3","@parcel/transformer-typescript-tsc":"^2.9.3","@parcel/transformer-typescript-types":"^2.9.3","@semantic-release/changelog":"^6.0.1","@semantic-release/git":"^10.0.1","@swc/core":"^1.3.27","@swc/jest":"^0.2.24","@types/jasmine":"^4.3.4","@wdio/browserstack-service":"^8.11.2","@wdio/cli":"^8.11.2","@wdio/globals":"^8.11.2","@wdio/jasmine-framework":"^8.11.2","@wdio/local-runner":"^8.11.2","@wdio/spec-reporter":"^8.11.2","@wdio/types":"^8.10.4","http-server":"^14.1.1","jest":"^29.3.1","jest-environment-jsdom":"^29.3.1","mock-socket":"^9.0.0","parcel":"^2.9.3","prettier":"^3.0.0","semantic-release":"^21.0.0","ts-node":"^10.9.1","typescript":"^5.0.0","wdio-geckodriver-service":"^5.0.1"},"dependencies":{"@msgpack/msgpack":"^2.8.0","cbor-x":"1.5.4","eventemitter3":"^4.0.7","peerjs-js-binarypack":"^2.1.0","webrtc-adapter":"^8.0.0"},"alias":{"process":false,"buffer":false}}');class eJ extends ej.EventEmitter{start(e,t){this._id=e;let n=`${this._baseUrl}&id=${e}&token=${t}`;!this._socket&&this._disconnected&&(this._socket=new WebSocket(n+"&version="+e$.version),this._disconnected=!1,this._socket.onmessage=e=>{let t;try{t=JSON.parse(e.data),eO.log("Server message received:",t)}catch(t){eO.log("Invalid server message",e.data);return}this.emit(M.Message,t)},this._socket.onclose=e=>{this._disconnected||(eO.log("Socket closed.",e),this._cleanup(),this._disconnected=!0,this.emit(M.Disconnected))},this._socket.onopen=()=>{this._disconnected||(this._sendQueuedMessages(),eO.log("Socket open"),this._scheduleHeartbeat())})}_scheduleHeartbeat(){this._wsPingTimer=setTimeout(()=>{this._sendHeartbeat()},this.pingInterval)}_sendHeartbeat(){if(!this._wsOpen()){eO.log("Cannot send heartbeat, because socket closed");return}let e=JSON.stringify({type:O.Heartbeat});this._socket.send(e),this._scheduleHeartbeat()}_wsOpen(){return!!this._socket&&1===this._socket.readyState}_sendQueuedMessages(){let e=[...this._messagesQueue];for(let t of(this._messagesQueue=[],e))this.send(t)}send(e){if(this._disconnected)return;if(!this._id){this._messagesQueue.push(e);return}if(!e.type){this.emit(M.Error,"Invalid message");return}if(!this._wsOpen())return;let t=JSON.stringify(e);this._socket.send(t)}close(){this._disconnected||(this._cleanup(),this._disconnected=!0)}_cleanup(){this._socket&&(this._socket.onopen=this._socket.onmessage=this._socket.onclose=null,this._socket.close(),this._socket=void 0),clearTimeout(this._wsPingTimer)}constructor(e,t,n,r,i,o=5e3){super(),this.pingInterval=o,this._disconnected=!0,this._messagesQueue=[],this._baseUrl=(e?"wss://":"ws://")+t+":"+n+r+"peerjs?key="+i}}class eV{startConnection(e){let t=this._startPeerConnection();if(this.connection.peerConnection=t,this.connection.type===P.Media&&e._stream&&this._addTracksToConnection(e._stream,t),e.originator){let n=this.connection,r={ordered:!!e.reliable},i=t.createDataChannel(n.label,r);n._initializeDataChannel(i),this._makeOffer()}else this.handleSDP("OFFER",e.sdp)}_startPeerConnection(){eO.log("Creating RTCPeerConnection.");let e=new RTCPeerConnection(this.connection.provider.options.config);return this._setupListeners(e),e}_setupListeners(e){let t=this.connection.peer,n=this.connection.connectionId,r=this.connection.type,i=this.connection.provider;eO.log("Listening for ICE candidates."),e.onicecandidate=e=>{e.candidate&&e.candidate.candidate&&(eO.log(`Received ICE candidates for ${t}:`,e.candidate),i.socket.send({type:O.Candidate,payload:{candidate:e.candidate,type:r,connectionId:n},dst:t}))},e.oniceconnectionstatechange=()=>{switch(e.iceConnectionState){case"failed":eO.log("iceConnectionState is failed, closing connections to "+t),this.connection.emitError(D.NegotiationFailed,"Negotiation of connection to "+t+" failed."),this.connection.close();break;case"closed":eO.log("iceConnectionState is closed, closing connections to "+t),this.connection.emitError(D.ConnectionClosed,"Connection to "+t+" closed."),this.connection.close();break;case"disconnected":eO.log("iceConnectionState changed to disconnected on the connection with "+t);break;case"completed":e.onicecandidate=()=>{}}this.connection.emit("iceStateChanged",e.iceConnectionState)},eO.log("Listening for data channel"),e.ondatachannel=e=>{eO.log("Received data channel");let r=e.channel;i.getConnection(t,n)._initializeDataChannel(r)},eO.log("Listening for remote stream"),e.ontrack=e=>{eO.log("Received remote stream");let r=e.streams[0],o=i.getConnection(t,n);o.type===P.Media&&this._addStreamToMediaConnection(r,o)}}cleanup(){eO.log("Cleaning up PeerConnection to "+this.connection.peer);let e=this.connection.peerConnection;if(!e)return;this.connection.peerConnection=null,e.onicecandidate=e.oniceconnectionstatechange=e.ondatachannel=e.ontrack=()=>{};let t="closed"!==e.signalingState,n=!1,r=this.connection.dataChannel;r&&(n=!!r.readyState&&"closed"!==r.readyState),(t||n)&&e.close()}async _makeOffer(){let e=this.connection.peerConnection,t=this.connection.provider;try{let n=await e.createOffer(this.connection.options.constraints);eO.log("Created offer."),this.connection.options.sdpTransform&&"function"==typeof this.connection.options.sdpTransform&&(n.sdp=this.connection.options.sdpTransform(n.sdp)||n.sdp);try{await e.setLocalDescription(n),eO.log("Set localDescription:",n,`for:${this.connection.peer}`);let r={sdp:n,type:this.connection.type,connectionId:this.connection.connectionId,metadata:this.connection.metadata};if(this.connection.type===P.Data){let e=this.connection;r={...r,label:e.label,reliable:e.reliable,serialization:e.serialization}}t.socket.send({type:O.Offer,payload:r,dst:this.connection.peer})}catch(e){"OperationError: Failed to set local offer sdp: Called in wrong state: kHaveRemoteOffer"!=e&&(t.emitError(E.WebRTC,e),eO.log("Failed to setLocalDescription, ",e))}}catch(e){t.emitError(E.WebRTC,e),eO.log("Failed to createOffer, ",e)}}async _makeAnswer(){let e=this.connection.peerConnection,t=this.connection.provider;try{let n=await e.createAnswer();eO.log("Created answer."),this.connection.options.sdpTransform&&"function"==typeof this.connection.options.sdpTransform&&(n.sdp=this.connection.options.sdpTransform(n.sdp)||n.sdp);try{await e.setLocalDescription(n),eO.log("Set localDescription:",n,`for:${this.connection.peer}`),t.socket.send({type:O.Answer,payload:{sdp:n,type:this.connection.type,connectionId:this.connection.connectionId},dst:this.connection.peer})}catch(e){t.emitError(E.WebRTC,e),eO.log("Failed to setLocalDescription, ",e)}}catch(e){t.emitError(E.WebRTC,e),eO.log("Failed to create answer, ",e)}}async handleSDP(e,t){t=new RTCSessionDescription(t);let n=this.connection.peerConnection,r=this.connection.provider;eO.log("Setting remote description",t);try{await n.setRemoteDescription(t),eO.log(`Set remoteDescription:${e} for:${this.connection.peer}`),"OFFER"===e&&await this._makeAnswer()}catch(e){r.emitError(E.WebRTC,e),eO.log("Failed to setRemoteDescription, ",e)}}async handleCandidate(e){eO.log("handleCandidate:",e);try{await this.connection.peerConnection.addIceCandidate(e),eO.log(`Added ICE candidate for:${this.connection.peer}`)}catch(e){this.connection.provider.emitError(E.WebRTC,e),eO.log("Failed to handleCandidate, ",e)}}_addTracksToConnection(e,t){if(eO.log(`add tracks from stream ${e.id} to peer connection`),!t.addTrack)return eO.error("Your browser does't support RTCPeerConnection#addTrack. Ignored.");e.getTracks().forEach(n=>{t.addTrack(n,e)})}_addStreamToMediaConnection(e,t){eO.log(`add stream ${e.id} to media connection ${t.connectionId}`),t.addStream(e)}constructor(e){this.connection=e}}class eG extends ej.EventEmitter{emitError(e,t){eO.error("Error:",t),this.emit("error",new eW(`${e}`,t))}}class eW extends Error{constructor(e,t){"string"==typeof t?super(t):(super(),Object.assign(this,t)),this.type=e}}class eH extends eG{get open(){return this._open}constructor(e,t,n){super(),this.peer=e,this.provider=t,this.options=n,this._open=!1,this.metadata=n.metadata}}class eY extends eH{get type(){return P.Media}get localStream(){return this._localStream}get remoteStream(){return this._remoteStream}_initializeDataChannel(e){this.dataChannel=e,this.dataChannel.onopen=()=>{eO.log(`DC#${this.connectionId} dc connection success`),this.emit("willCloseOnRemote")},this.dataChannel.onclose=()=>{eO.log(`DC#${this.connectionId} dc closed for:`,this.peer),this.close()}}addStream(e){eO.log("Receiving stream",e),this._remoteStream=e,super.emit("stream",e)}handleMessage(e){let t=e.type,n=e.payload;switch(e.type){case O.Answer:this._negotiator.handleSDP(t,n.sdp),this._open=!0;break;case O.Candidate:this._negotiator.handleCandidate(n.candidate);break;default:eO.warn(`Unrecognized message type:${t} from peer:${this.peer}`)}}answer(e,t={}){if(this._localStream){eO.warn("Local stream already exists on this MediaConnection. Are you answering a call twice?");return}for(let n of(this._localStream=e,t&&t.sdpTransform&&(this.options.sdpTransform=t.sdpTransform),this._negotiator.startConnection({...this.options._payload,_stream:e}),this.provider._getMessages(this.connectionId)))this.handleMessage(n);this._open=!0}close(){this._negotiator&&(this._negotiator.cleanup(),this._negotiator=null),this._localStream=null,this._remoteStream=null,this.provider&&(this.provider._removeConnection(this),this.provider=null),this.options&&this.options._stream&&(this.options._stream=null),this.open&&(this._open=!1,super.emit("close"))}constructor(e,t,n){super(e,t,n),this._localStream=this.options._stream,this.connectionId=this.options.connectionId||eY.ID_PREFIX+eM.randomToken(),this._negotiator=new eV(this),this._localStream&&this._negotiator.startConnection({_stream:this._localStream,originator:!0})}}eY.ID_PREFIX="mc_";class eK{_buildRequest(e){let t=this._options.secure?"https":"http",{host:n,port:r,path:i,key:o}=this._options,s=new URL(`${t}://${n}:${r}${i}${o}/${e}`);return s.searchParams.set("ts",`${Date.now()}${Math.random()}`),s.searchParams.set("version",e$.version),fetch(s.href,{referrerPolicy:this._options.referrerPolicy})}async retrieveId(){try{let e=await this._buildRequest("id");if(200!==e.status)throw Error(`Error. Status:${e.status}`);return e.text()}catch(t){eO.error("Error retrieving ID",t);let e="";throw"/"===this._options.path&&this._options.host!==eM.CLOUD_HOST&&(e=" If you passed in a `path` to your self-hosted PeerServer, you'll also need to pass in that same path when creating a new Peer."),Error("Could not get an ID from the server."+e)}}async listAllPeers(){try{let e=await this._buildRequest("peers");if(200!==e.status){if(401===e.status){let e="";throw e=this._options.host===eM.CLOUD_HOST?"It looks like you're using the cloud server. You can email team@peerjs.com to enable peer listing for your API key.":"You need to enable `allow_discovery` on your self-hosted PeerServer to use this feature.",Error("It doesn't look like you have permission to list peers IDs. "+e)}throw Error(`Error. Status:${e.status}`)}return e.json()}catch(e){throw eO.error("Error retrieving list peers",e),Error("Could not get list peers from the server."+e)}}constructor(e){this._options=e}}class eX extends eH{get type(){return P.Data}_initializeDataChannel(e){this.dataChannel=e,this.dataChannel.onopen=()=>{eO.log(`DC#${this.connectionId} dc connection success`),this._open=!0,this.emit("open")},this.dataChannel.onmessage=e=>{eO.log(`DC#${this.connectionId} dc onmessage:`,e.data)},this.dataChannel.onclose=()=>{eO.log(`DC#${this.connectionId} dc closed for:`,this.peer),this.close()}}close(e){if(e?.flush){this.send({__peerData:{type:"close"}});return}this._negotiator&&(this._negotiator.cleanup(),this._negotiator=null),this.provider&&(this.provider._removeConnection(this),this.provider=null),this.dataChannel&&(this.dataChannel.onopen=null,this.dataChannel.onmessage=null,this.dataChannel.onclose=null,this.dataChannel=null),this.open&&(this._open=!1,super.emit("close"))}send(e,t=!1){if(!this.open){this.emitError(x.NotOpenYet,"Connection is not open. You should listen for the `open` event before sending messages.");return}return this._send(e,t)}async handleMessage(e){let t=e.payload;switch(e.type){case O.Answer:await this._negotiator.handleSDP(e.type,t.sdp);break;case O.Candidate:await this._negotiator.handleCandidate(t.candidate);break;default:eO.warn("Unrecognized message type:",e.type,"from peer:",this.peer)}}constructor(e,t,n){super(e,t,n),this.connectionId=this.options.connectionId||eX.ID_PREFIX+ex(),this.label=this.options.label||this.connectionId,this.reliable=!!this.options.reliable,this._negotiator=new eV(this),this._negotiator.startConnection(this.options._payload||{originator:!0,reliable:this.reliable})}}eX.ID_PREFIX="dc_",eX.MAX_BUFFERED_AMOUNT=8388608;class eq extends eX{get bufferSize(){return this._bufferSize}_initializeDataChannel(e){super._initializeDataChannel(e),this.dataChannel.binaryType="arraybuffer",this.dataChannel.addEventListener("message",e=>this._handleDataMessage(e))}_bufferedSend(e){(this._buffering||!this._trySend(e))&&(this._buffer.push(e),this._bufferSize=this._buffer.length)}_trySend(e){if(!this.open)return!1;if(this.dataChannel.bufferedAmount>eX.MAX_BUFFERED_AMOUNT)return this._buffering=!0,setTimeout(()=>{this._buffering=!1,this._tryBuffer()},50),!1;try{this.dataChannel.send(e)}catch(e){return eO.error(`DC#:${this.connectionId} Error when sending:`,e),this._buffering=!0,this.close(),!1}return!0}_tryBuffer(){if(!this.open||0===this._buffer.length)return;let e=this._buffer[0];this._trySend(e)&&(this._buffer.shift(),this._bufferSize=this._buffer.length,this._tryBuffer())}close(e){if(e?.flush){this.send({__peerData:{type:"close"}});return}this._buffer=[],this._bufferSize=0,super.close()}constructor(...e){super(...e),this._buffer=[],this._bufferSize=0,this._buffering=!1}}class eQ extends eq{close(e){super.close(e),this._chunkedData={}}_handleDataMessage({data:e}){let t=i(e),n=t.__peerData;if(n){if("close"===n.type){this.close();return}this._handleChunk(t);return}this.emit("data",t)}_handleChunk(e){let t=e.__peerData,n=this._chunkedData[t]||{data:[],count:0,total:e.total};if(n.data[e.n]=new Uint8Array(e.data),n.count++,this._chunkedData[t]=n,n.total===n.count){delete this._chunkedData[t];let e=function(e){let t=0;for(let n of e)t+=n.byteLength;let n=new Uint8Array(t),r=0;for(let t of e)n.set(t,r),r+=t.byteLength;return n}(n.data);this._handleDataMessage({data:e})}}_send(e,t){let n=o(e);if(n instanceof Promise)return this._send_blob(n);if(!t&&n.byteLength>this.chunker.chunkedMTU){this._sendChunks(n);return}this._bufferedSend(n)}async _send_blob(e){let t=await e;if(t.byteLength>this.chunker.chunkedMTU){this._sendChunks(t);return}this._bufferedSend(t)}_sendChunks(e){let t=this.chunker.chunk(e);for(let e of(eO.log(`DC#${this.connectionId} Try to send ${t.length} chunks...`),t))this.send(e,!0)}constructor(e,t,r){super(e,t,r),this.chunker=new n,this.serialization=I.Binary,this._chunkedData={}}}class eZ extends eq{_handleDataMessage({data:e}){super.emit("data",e)}_send(e,t){this._bufferedSend(e)}constructor(...e){super(...e),this.serialization=I.None}}class e0 extends eq{_handleDataMessage({data:e}){let t=this.parse(this.decoder.decode(e)),n=t.__peerData;if(n&&"close"===n.type){this.close();return}this.emit("data",t)}_send(e,t){let n=this.encoder.encode(this.stringify(e));if(n.byteLength>=eM.chunkedMTU){this.emitError(x.MessageToBig,"Message too big for JSON channel");return}this._bufferedSend(n)}constructor(...e){super(...e),this.serialization=I.JSON,this.encoder=new TextEncoder,this.decoder=new TextDecoder,this.stringify=JSON.stringify,this.parse=JSON.parse}}class e1 extends eG{get id(){return this._id}get options(){return this._options}get open(){return this._open}get socket(){return this._socket}get connections(){let e=Object.create(null);for(let[t,n]of this._connections)e[t]=n;return e}get destroyed(){return this._destroyed}get disconnected(){return this._disconnected}_createServerConnection(){let e=new eJ(this._options.secure,this._options.host,this._options.port,this._options.path,this._options.key,this._options.pingInterval);return e.on(M.Message,e=>{this._handleMessage(e)}),e.on(M.Error,e=>{this._abort(E.SocketError,e)}),e.on(M.Disconnected,()=>{this.disconnected||(this.emitError(E.Network,"Lost connection to server."),this.disconnect())}),e.on(M.Close,()=>{this.disconnected||this._abort(E.SocketClosed,"Underlying socket is already closed.")}),e}_initialize(e){this._id=e,this.socket.start(e,this._options.token)}_handleMessage(e){let t=e.type,n=e.payload,r=e.src;switch(t){case O.Open:this._lastServerId=this.id,this._open=!0,this.emit("open",this.id);break;case O.Error:this._abort(E.ServerError,n.msg);break;case O.IdTaken:this._abort(E.UnavailableID,`ID "${this.id}" is taken`);break;case O.InvalidKey:this._abort(E.InvalidKey,`API KEY "${this._options.key}" is invalid`);break;case O.Leave:eO.log(`Received leave message from ${r}`),this._cleanupPeer(r),this._connections.delete(r);break;case O.Expire:this.emitError(E.PeerUnavailable,`Could not connect to peer ${r}`);break;case O.Offer:{let e=n.connectionId,t=this.getConnection(r,e);if(t&&(t.close(),eO.warn(`Offer received for existing Connection ID:${e}`)),n.type===P.Media){let i=new eY(r,this,{connectionId:e,_payload:n,metadata:n.metadata});t=i,this._addConnection(r,t),this.emit("call",i)}else if(n.type===P.Data){let i=new this._serializers[n.serialization](r,this,{connectionId:e,_payload:n,metadata:n.metadata,label:n.label,serialization:n.serialization,reliable:n.reliable});t=i,this._addConnection(r,t),this.emit("connection",i)}else{eO.warn(`Received malformed connection type:${n.type}`);return}for(let n of this._getMessages(e))t.handleMessage(n);break}default:{if(!n){eO.warn(`You received a malformed message from ${r} of type ${t}`);return}let i=n.connectionId,o=this.getConnection(r,i);o&&o.peerConnection?o.handleMessage(e):i?this._storeMessage(i,e):eO.warn("You received an unrecognized message:",e)}}}_storeMessage(e,t){this._lostMessages.has(e)||this._lostMessages.set(e,[]),this._lostMessages.get(e).push(t)}_getMessages(e){let t=this._lostMessages.get(e);return t?(this._lostMessages.delete(e),t):[]}connect(e,t={}){if(t={serialization:"default",...t},this.disconnected){eO.warn("You cannot connect to a new Peer because you called .disconnect() on this Peer and ended your connection with the server. You can create a new Peer to reconnect, or call reconnect on this peer if you believe its ID to still be available."),this.emitError(E.Disconnected,"Cannot connect to new Peer after disconnecting from server.");return}let n=new this._serializers[t.serialization](e,this,t);return this._addConnection(e,n),n}call(e,t,n={}){if(this.disconnected){eO.warn("You cannot connect to a new Peer because you called .disconnect() on this Peer and ended your connection with the server. You can create a new Peer to reconnect."),this.emitError(E.Disconnected,"Cannot connect to new Peer after disconnecting from server.");return}if(!t){eO.error("To call a peer, you must provide a stream from your browser's `getUserMedia`.");return}let r=new eY(e,this,{...n,_stream:t});return this._addConnection(e,r),r}_addConnection(e,t){eO.log(`add connection ${t.type}:${t.connectionId} to peerId:${e}`),this._connections.has(e)||this._connections.set(e,[]),this._connections.get(e).push(t)}_removeConnection(e){let t=this._connections.get(e.peer);if(t){let n=t.indexOf(e);-1!==n&&t.splice(n,1)}this._lostMessages.delete(e.connectionId)}getConnection(e,t){let n=this._connections.get(e);if(!n)return null;for(let e of n)if(e.connectionId===t)return e;return null}_delayedAbort(e,t){setTimeout(()=>{this._abort(e,t)},0)}_abort(e,t){eO.error("Aborting!"),this.emitError(e,t),this._lastServerId?this.disconnect():this.destroy()}destroy(){this.destroyed||(eO.log(`Destroy peer with ID:${this.id}`),this.disconnect(),this._cleanup(),this._destroyed=!0,this.emit("close"))}_cleanup(){for(let e of this._connections.keys())this._cleanupPeer(e),this._connections.delete(e);this.socket.removeAllListeners()}_cleanupPeer(e){let t=this._connections.get(e);if(t)for(let e of t)e.close()}disconnect(){if(this.disconnected)return;let e=this.id;eO.log(`Disconnect peer with ID:${e}`),this._disconnected=!0,this._open=!1,this.socket.close(),this._lastServerId=e,this._id=null,this.emit("disconnected",e)}reconnect(){if(this.disconnected&&!this.destroyed)eO.log(`Attempting reconnection to server with ID ${this._lastServerId}`),this._disconnected=!1,this._initialize(this._lastServerId);else if(this.destroyed)throw Error("This peer cannot reconnect to the server. It has already been destroyed.");else if(this.disconnected||this.open)throw Error(`Peer ${this.id} cannot reconnect because it is not disconnected from the server!`);else eO.error("In a hurry? We're still trying to make the initial connection!")}listAllPeers(e=e=>{}){this._api.listAllPeers().then(t=>e(t)).catch(e=>this._abort(E.ServerError,e))}constructor(e,t){let n;if(super(),this._serializers={raw:eZ,json:e0,binary:eQ,"binary-utf8":eQ,default:eQ},this._id=null,this._lastServerId=null,this._destroyed=!1,this._disconnected=!1,this._open=!1,this._connections=new Map,this._lostMessages=new Map,e&&e.constructor==Object?t=e:e&&(n=e.toString()),t={debug:0,host:eM.CLOUD_HOST,port:eM.CLOUD_PORT,path:"/",key:e1.DEFAULT_KEY,token:eM.randomToken(),config:eM.defaultConfig,referrerPolicy:"strict-origin-when-cross-origin",serializers:{},...t},this._options=t,this._serializers={...this._serializers,...this.options.serializers},"/"===this._options.host&&(this._options.host=window.location.hostname),this._options.path&&("/"!==this._options.path[0]&&(this._options.path="/"+this._options.path),"/"!==this._options.path[this._options.path.length-1]&&(this._options.path+="/")),void 0===this._options.secure&&this._options.host!==eM.CLOUD_HOST?this._options.secure=eM.isSecure():this._options.host==eM.CLOUD_HOST&&(this._options.secure=!0),this._options.logFunction&&eO.setLogFunction(this._options.logFunction),eO.logLevel=this._options.debug||0,this._api=new eK(t),this._socket=this._createServerConnection(),!eM.supports.audioVideo&&!eM.supports.data){this._delayedAbort(E.BrowserIncompatible,"The current browser does not support WebRTC");return}if(n&&!eM.validateId(n)){this._delayedAbort(E.InvalidID,`ID "${n}" is invalid`);return}n?this._initialize(n):this._api.retrieveId().then(e=>this._initialize(e)).catch(e=>this._abort(E.ServerError,e))}}e1.DEFAULT_KEY="peerjs",window.peerjs={Peer:e1,util:eM},window.Peer=e1})();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -77,7 +89,81 @@
             .hex-row.odd { transform: translateX(26px); }
             .board-wrapper { padding: 15px 5px; }
         }
-    </style>
+
+        .field-label { display: block; font-size: 0.95rem; color: #cbd5e1; text-align: right; margin-top: 10px; }
+        .lobby-row { display: flex; gap: 10px; }
+        .lobby-row > * { flex: 1; }
+        .check-row { display: flex; align-items: center; gap: 8px; justify-content: flex-start; margin-top: 12px; font-size: 1rem; }
+        .check-row input { width: 20px; height: 20px; }
+        .room-code-big { font-size: 3rem; font-weight: 900; letter-spacing: 0.4em; color: #38bdf8; text-align: center; direction: ltr; margin: 8px 0; }
+        .qr-box { background: #fff; padding: 12px; border-radius: 12px; width: fit-content; margin: 10px auto; }
+        .qr-box canvas { display: block; }
+        .lobby-player { display: flex; align-items: center; gap: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 10px; margin: 6px 0; text-align: right; }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 900; color: #fff; flex-shrink: 0; }
+        .avatar-green { background: var(--green); } .avatar-orange { background: var(--orange); }
+        .ready-tag { margin-right: auto; font-weight: bold; white-space: nowrap; }
+        .ready-yes { color: #4ade80; } .ready-no { color: #fbbf24; }
+        #turn-bar { display: none; text-align: center; font-size: 1.25rem; font-weight: bold; padding: 10px; border-radius: 12px; margin-bottom: 12px; }
+        #turn-bar.turn-green { display: block; background: rgba(22,163,74,.25); border: 2px solid var(--green); color: #4ade80; }
+        #turn-bar.turn-orange { display: block; background: rgba(234,88,12,.25); border: 2px solid var(--orange); color: #fb923c; }
+        #pause-banner, #stage-banner { display: none; padding: 14px; border-radius: 12px; font-weight: bold; text-align: center; margin: 10px 0; font-size: 1.15rem; }
+        #pause-banner { background: #78350f; border: 2px solid #f59e0b; }
+        #stage-banner { background: #1e3a8a; border: 2px solid #38bdf8; }
+        #final-screen { display: none; position: fixed; inset: 0; background: rgba(2,6,23,.92); z-index: 50; align-items: center; justify-content: center; padding: 20px; }
+        #final-screen.show { display: flex; }
+        .final-card { background: var(--card); border-radius: 20px; padding: 30px 20px; text-align: center; max-width: 480px; width: 100%; }
+        .opt-btn { display: block; width: 100%; margin: 6px 0; padding: 14px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; border: 2px solid #38bdf8; background: #0f172a; color: #f8fafc; cursor: pointer; }
+        .opt-btn:active { transform: scale(.97); }
+        .reaction-btn { font-size: 1.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+        #reactions-float { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); font-size: 2.4rem; pointer-events: none; z-index: 40; }
+        .float-emoji { position: absolute; animation: floatUp 2.6s ease-out forwards; }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(-90px) scale(1.4); } }
+        #last-move { color: #94a3b8; font-size: 0.95rem; margin-top: 6px; }
+        .stage-badge { background: #0ea5e9; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; }
+        #bank-status { font-size: 0.9rem; color: #94a3b8; margin-top: 10px; }
+        .icon-btn { background: #334155; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 1rem; cursor: pointer; }
+        body.tv-mode { padding: 10px; }
+        body.tv-mode h1 { font-size: 2.6rem; }
+        body.tv-mode .screen { max-width: 1600px; }
+        body.tv-mode .hex-cell { width: 110px; height: 126px; font-size: 2.6rem; }
+        body.tv-mode .hex-row { margin-bottom: -26px; gap: 10px; }
+        body.tv-mode .hex-row.odd { transform: translateX(60px); }
+        body.tv-mode .score-card { font-size: 2rem; padding: 20px; }
+        body.tv-mode #turn-bar { font-size: 2rem; }
+        body.tv-mode #current-question { font-size: 2.2rem; }
+        body.tv-mode #current-letter { font-size: 2.4rem !important; }
+        body.tv-mode .opt-btn { font-size: 1.8rem; padding: 18px; }
+        body.tv-mode #host-controls, body.tv-mode #player-controls, body.tv-mode #host-info-bar, body.tv-mode #lobby-screen, body.tv-mode .buzzer-btn { display: none !important; }
+        body.tv-mode #last-move { font-size: 1.4rem; }
+        body.tv-mode .border-indicator { font-size: 1.3rem; }
+        @media (max-width: 500px) {
+            .room-code-big { font-size: 2.4rem; letter-spacing: .3em; }
+            #turn-bar { font-size: 1.1rem; }
+        }
+    
+        /* ===== TV view (Phase 3) ===== */
+        #tv-screen { display: none; }
+        #tv-screen.active { display: block; }
+        #tv-screen h1 { font-size: 3rem; margin: 0 0 8px; }
+        .tv-room { font-size: 1.6rem; color: #94a3b8; margin-bottom: 8px; }
+        .tv-scores { display: flex; justify-content: center; gap: 48px; font-size: 2.4rem; font-weight: 700; margin: 12px 0; }
+        .tv-score-green { color: var(--green); }
+        .tv-score-orange { color: var(--orange); }
+        .tv-turn { font-size: 2rem; font-weight: 700; margin: 10px 0; }
+        #tv-grid { margin: 18px auto; }
+        .tv-question { font-size: 2.2rem; font-weight: 700; margin: 16px 0 8px; }
+        .tv-options { display: flex; flex-direction: column; gap: 10px; max-width: 700px; margin: 0 auto; }
+        .tv-opt { background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 14px; font-size: 1.7rem; }
+        .tv-lastmove { font-size: 1.4rem; color: #94a3b8; margin-top: 14px; }
+        .tv-winner { font-size: 2.4rem; font-weight: 700; color: #facc15; margin-top: 12px; }
+        .tv-status { font-size: 1.1rem; color: #64748b; margin-top: 16px; }
+        @media (max-width: 500px) {
+            #tv-screen h1 { font-size: 2rem; }
+            .tv-scores { font-size: 1.6rem; gap: 24px; }
+            .tv-question { font-size: 1.5rem; }
+            .tv-opt { font-size: 1.2rem; }
+        }
+</style>
 </head>
 <body>
 
@@ -97,9 +183,51 @@
                     <option value="20-25">من 20 إلى 25 سنة (جامعيين)</option>
                     <option value="25-50">من 25 إلى 50 سنة (محترفين)</option>
                 </select>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 10px; margin-bottom: 20px; padding: 16px; font-size: 1.1rem;" onclick="initHost()">
+                <label class="field-label">عدد اللاعبين:</label>
+                <select id="mode-select" class="select-field">
+                    <option value="1v1">لاعبان (1 ضد 1)</option>
+                    <option value="2v2">4 لاعبين (2 ضد 2)</option>
+                </select>
+                <div class="lobby-row">
+                    <div>
+                        <label class="field-label">مرحلة البداية:</label>
+                        <select id="stage-select" class="select-field">
+                            <option value="easy">سهل</option>
+                            <option value="medium">متوسط</option>
+                            <option value="hard">صعب</option>
+                            <option value="expert">خبير</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">مؤقّت الدور:</label>
+                        <select id="timer-select" class="select-field">
+                            <option value="60">60 ثانية</option>
+                            <option value="30">30 ثانية</option>
+                            <option value="0">بدون مؤقّت</option>
+                        </select>
+                    </div>
+                </div>
+                <label class="check-row"><input type="checkbox" id="host-play-check" onchange="document.getElementById('host-team-row').style.display=this.checked?'flex':'none'"> العب معهم (المقدم يلعب أيضاً)</label>
+                <div id="host-team-row" class="lobby-row" style="display:none;">
+                    <div>
+                        <label class="field-label">فريقي:</label>
+                        <select id="host-team-select" class="select-field">
+                            <option value="green">الفريق الأخضر</option>
+                            <option value="orange">الفريق البرتقالي</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 16px; font-size: 1.1rem;" onclick="initHost()">
                     إنشاء غرفة جديدة (مقدم المسابقة)
                 </button>
+                <button class="btn btn-gray" style="width: 100%; margin-top: 10px; margin-bottom: 10px; padding: 16px; font-size: 1.1rem;" onclick="startSinglePlayer()">
+                    لعب فردي — بدون غرفة 🎮
+                </button>
+                <div id="bank-status">بنك الأسئلة: جارٍ التحميل…</div>
+                <div class="flex-row" style="margin-top: 8px;">
+                    <button class="btn btn-gray" style="font-size: 0.85rem; padding: 8px 12px;" onclick="refreshBank()">تحديث الأسئلة 🔄</button>
+                    <button class="btn btn-gray" style="font-size: 0.85rem; padding: 8px 12px;" onclick="resetUsedCycle()">تصفير عدّاد الاستخدام ↺</button>
+                </div>
                 <hr style="border-color: #334155; margin: 20px 0;">
             </div>
             
@@ -121,11 +249,42 @@
 
             <input type="text" id="player-name-input" class="input-field" style="margin-top: 15px; font-size: 0.9rem;" placeholder="اختياري: اكتب اسمك أو اتركه فارغاً">
             <p id="lobby-status" style="margin-top: 12px; color: #38bdf8; font-weight: bold;"></p>
+            <p id="connection-status" style="margin-top: 6px; color: #94a3b8; font-size: 0.9rem;"></p>
+            <button id="join-retry-btn" class="btn btn-primary" style="display: none; margin-top: 10px;" onclick="retryJoin()">إعادة المحاولة 🔄</button>
+        </div>
+    </div>
+
+    <!-- 1b. ردهة الغرفة -->
+    <div id="room-lobby-screen" class="screen">
+        <div style="text-align: center; max-width: 520px; margin: auto;">
+            <h2 style="color: #38bdf8;">غرفة اللعب 🎮</h2>
+            <p style="color: #cbd5e1;">شارك الرمز أو امسح رمز QR للانضمام:</p>
+            <div id="lobby-room-code" class="room-code-big">····</div>
+            <div class="qr-box"><canvas id="qr-canvas" width="220" height="220"></canvas></div>
+            <p id="qr-link-text" style="font-size: 0.8rem; color: #94a3b8; word-break: break-all;"></p>
+            <div class="flex-row" style="margin: 12px 0;">
+                <button class="btn btn-primary" onclick="copyInviteLink('any')">🔗 رابط عام</button>
+                <button class="btn btn-green" onclick="copyInviteLink('green')">🟢 رابط الأخضر</button>
+                <button class="btn btn-orange" onclick="copyInviteLink('orange')">🟠 رابط البرتقالي</button>
+                <button class="btn btn-gray" onclick="copyInviteLink('tv')">📺 رابط التلفاز</button>
+            </div>
+            <div id="lobby-settings-summary" style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 8px;"></div>
+            <h3 style="margin: 14px 0 6px;">اللاعبون في الغرفة</h3>
+            <div id="lobby-players-list"></div>
+            <div id="lobby-ready-row" class="flex-row" style="margin-top: 14px;">
+                <button id="ready-btn" class="btn btn-green" style="flex: 1; padding: 16px; font-size: 1.1rem;" onclick="toggleReady()">أنا جاهز ✅</button>
+            </div>
+            <button id="start-game-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 16px; font-size: 1.15rem; display: none;" onclick="startGame()">ابدأ اللعب ▶️</button>
+            <p id="lobby-start-hint" style="color: #fbbf24; margin-top: 8px;"></p>
+            <button class="btn btn-gray" style="margin-top: 14px;" onclick="leaveRoom()">مغادرة الغرفة 🚪</button>
+            <p id="room-lobby-status" style="margin-top: 10px; color: #94a3b8;"></p>
         </div>
     </div>
 
     <!-- 2. شاشة اللعب -->
     <div id="game-screen" class="screen">
+        <div id="reactions-float"></div>
+        <div id="turn-bar"></div>
         <div class="scoreboard">
             <div class="score-card score-green">الفريق الأخضر: <span id="score-green">0</span> نقطة</div>
             <div class="score-card score-orange">الفريق البرتقالي: <span id="score-orange">0</span> نقطة</div>
@@ -152,15 +311,20 @@
                 <button class="btn btn-primary" onclick="copyInviteLink('any')">🔗 رابط عام</button>
                 <button class="btn btn-green" onclick="copyInviteLink('green')">🟢 رابط الأخضر</button>
                 <button class="btn btn-orange" onclick="copyInviteLink('orange')">🟠 رابط البرتقالي</button>
+                <button class="btn btn-gray" onclick="copyInviteLink('tv')">📺 رابط التلفاز</button>
             </div>
+            <div id="host-bank-line" style="margin-top: 10px; font-size: 0.9rem; color: #cbd5e1; text-align: center;"></div>
             <div style="margin-top: 10px; font-size: 0.9rem; color: #cbd5e1; text-align: center;">
                 اللاعبون المتصلون (<span id="players-count">0</span>): <span id="connected-players">لا يوجد بعد</span>
             </div>
         </div>
 
         <div id="win-banner" class="buzz-alert" style="background: #eab308; color: #000; font-size: 1.5rem;"></div>
+        <div id="pause-banner"></div>
+        <div id="stage-banner"></div>
 
         <div id="buzz-banner" class="buzz-alert"></div>
+        <div id="conn-banner" class="buzz-alert" style="background: #dc2626; display: none;"></div>
         <div id="timer-box" class="timer-box">
             <div style="font-size: 0.9rem; color: #cbd5e1;">الوقت المتبقي للإجابة</div>
             <div id="timer-digits" class="timer-digits">10</div>
@@ -185,6 +349,8 @@
                 <span id="current-level-badge" class="level-badge">المستوى: جميع الأعمار</span>
             </div>
             <div id="current-question" style="font-size: 1.3rem; font-weight: bold; margin: 10px 0;">اختر حرفاً من الشبكة لبدء السؤال</div>
+            <div id="question-options"></div>
+            <div id="last-move">—</div>
         </div>
 
         <div id="host-controls" class="panel" style="display: none;">
@@ -197,6 +363,9 @@
                 <button class="btn btn-gray" onclick="colorSelectedCell('neutral')">إعادة للأصفر</button>
                 <button class="btn btn-primary" onclick="changeQuestion()">سؤال آخر 🔄</button>
                 <button class="btn btn-danger" onclick="unlockBuzzer()">تصفير الجرس</button>
+                <button class="btn btn-primary" onclick="passTurn()">تمرير الدور ⏭️</button>
+                <button class="btn btn-gray" id="next-stage-btn" style="display:none;" onclick="advanceStage()">المرحلة التالية ⏭️</button>
+                <button class="icon-btn mute-btn" onclick="toggleMute()">🔊</button>
             </div>
         </div>
 
@@ -204,9 +373,27 @@
             <div style="margin-bottom: 8px;">
                 معرّفك: <strong id="player-id-label" style="color: #38bdf8;"></strong> | 
                 الفريق: <span id="player-team-badge" class="badge"></span>
-                <button class="btn btn-gray" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeam()">تبديل</button>
+                <button class="btn btn-gray" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeamCode()">تبديل</button>
             </div>
             <button id="buzzer-btn" class="btn buzzer-btn" onclick="sendBuzz()">اضغط الجرس للإجابة! 🔔</button>
+            <div id="reactions-row" class="flex-row" style="margin-top: 12px;">
+                <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
+                <button class="reaction-btn" onclick="sendReaction('😄')">😄</button>
+                <button class="reaction-btn" onclick="sendReaction('🎉')">🎉</button>
+                <button class="btn btn-gray" id="hint-btn" onclick="useHint()">تلميح 💡 (<span id="hints-left">3</span>)</button>
+                <button class="btn btn-gray" onclick="passTurn()">تمرير الدور ⏭️</button>
+                <button class="icon-btn mute-btn" onclick="toggleMute()">🔊</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- شاشة الفائز النهائية -->
+    <div id="final-screen">
+        <div class="final-card">
+            <h2 id="final-title" style="font-size: 1.8rem; margin-bottom: 10px;">🎉</h2>
+            <p id="final-score" style="font-size: 1.3rem; margin-bottom: 20px;"></p>
+            <button class="btn btn-green" style="width: 100%; padding: 16px; font-size: 1.15rem;" onclick="rematch()">إعادة اللعب 🔄</button>
+            <button class="btn btn-gray" style="width: 100%; margin-top: 10px; padding: 14px;" onclick="backToLobby()">عودة إلى الردهة 🚪</button>
         </div>
     </div>
 
@@ -404,7 +591,7 @@ let hostInitializing = false;
 let joinInitializing = false;
 let moveHistory = [];
 let eventHistory = [];
-const MAX_TIMER_SECONDS = 10;
+let MAX_TIMER_SECONDS = 60; // turn timer: was the 10s buzzer timer; set per-turn from the lobby (30/60/none) in startTurnTimer
 
 let gameState = {
     grid: [],
@@ -583,6 +770,7 @@ function stopHostTimer() {
 
 function initHost() {
     if (hostInitializing || isHost) return;
+    if (typeof Peer === 'undefined') { setConnectionStatus('تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.'); alert('تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.'); return; }
     hostInitializing = true;
     setConnectionStatus('جاري إنشاء غرفة المسابقة…');
     isHost = true;
@@ -809,6 +997,7 @@ async function copyInviteLink(teamType) {
 
 function joinGame(team) {
     if (joinInitializing || hostConn && hostConn.open) return;
+    if (typeof Peer === 'undefined') { document.getElementById('lobby-status').textContent = 'تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.'; return; }
     if (team !== 'green' && team !== 'orange') return;
     joinInitializing = true;
     setConnectionStatus('جاري الاتصال بالغرفة…');
@@ -859,7 +1048,7 @@ function joinGame(team) {
     });
     peer.on('error', (err) => {
         joinInitializing = false;
-        const msg = err && err.type === 'peer-unavailable' ? 'الغرفة غير موجودة أو انتهت صلاحيتها. تحقق من الرمز.' : 'تعذّر الاتصال بالغرفة؛ تحقق من الإنترنت ورمز الغرفة.';
+        const msg = err && err.type === 'peer-unavailable' ? 'الغرفة غير موجودة أو انتهت صلاحيتها.' : 'تعذّر الاتصال بالغرفة.';
         document.getElementById('lobby-status').textContent = msg;
         setConnectionStatus(msg);
     });
@@ -873,6 +1062,15 @@ function updatePlayerBadge() {
 }
 
 function switchTeamCode() {
+    if (isHost && (gameState.solo || (gameState.settings && gameState.settings.hostPlay))) {
+        playerInfo.team = playerInfo.team === 'green' ? 'orange' : 'green';
+        const me = (gameState.roster || []).find(r => r.isHost);
+        if (me) me.team = playerInfo.team;
+        updatePlayerBadge();
+        renderUI();
+        broadcastState();
+        return;
+    }
     if (!hostConn || !hostConn.open) return;
     playerInfo.team = playerInfo.team === 'green' ? 'orange' : 'green';
     updatePlayerBadge();
@@ -882,7 +1080,7 @@ function switchTeamCode() {
 }
 
 function sendBuzz() {
-    if (hostConn && hostConn.open && !gameState.bxzzedPlayer && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
+    if (hostConn && hostConn.open && !gameState.buzzedPlayer && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
         hostConn.send({ type: 'BUZZ', name: playerInfo.name, team: playerInfo.team });
     }
 }
@@ -987,7 +1185,7 @@ function playTimeUpSound() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
-        osc.type.value = 'sawtooth';
+        osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(220, ctx.currentTime);
         osc.frequency.linearRampToValueAtTime(130, ctx.currentTime + 0.5);
         osc.connect(ctx.destination);
@@ -1001,6 +1199,1926 @@ window.addEventListener('beforeunload', () => {
     stopHostTimer();
     try { if (peer && !peer.destroyed) peer.destroy(); } catch (e) {}
 });
+
+/* ===== Edit A2: connection-layer fix + Phase 1 (lobby / room / QR) ===== */
+/* Connection robustness (live-diagnosis fix): timeouts + auto-retry + status.
+   The old code set isHost/hostInitializing before peer 'open' and never
+   recovered when neither 'open' nor 'error' fired; join had no handler on
+   the data connection itself. All of that is fixed below. */
+
+Object.assign(gameState, {
+    phase: 'lobby', stageIndex: 0, turn: 'green', turnSeconds: 60,
+    paused: null, lastMove: '', questionOptions: null, questionType: '',
+    questionHint: '', hintsUsed: {}, roster: [],
+    settings: { mode: '1v1', stage: 'easy', timer: 60, hostPlay: false, hostTeam: 'green' },
+    bankStats: { used: 0, total: 0, version: '' },
+    stageWinner: null, solo: false, roomCodeShort: ''
+});
+
+const CONN_MAX_ATTEMPTS = 3;
+const CONN_HOST_TIMEOUT_MS = 12000;
+const CONN_JOIN_TIMEOUT_MS = 10000;
+const STAGE_KEYS = ['easy', 'medium', 'hard', 'expert'];
+const STAGE_NAMES = { easy: 'سهل', medium: 'متوسط', hard: 'صعب', expert: 'خبير' };
+let hostAttempt = { n: 0, timer: null };
+let joinAttempt = { n: 0, timer: null };
+let lastJoinTeam = 'green';
+let roomCodeFull = '';
+let myReady = false;
+let soundOn = true;
+try { soundOn = localStorage.getItem('huroof-sound') !== 'off'; } catch (e) {}
+
+function genRoomCode4() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let s = '';
+    for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+}
+
+function normalizeRoomCode(input) {
+    const v = (input || '').trim();
+    if (!v) return '';
+    if (/^huroof-/i.test(v)) return 'huroof-' + v.slice(7).toUpperCase();
+    if (v.length === 4) return 'huroof-' + v.toUpperCase();
+    return v;
+}
+
+function baseUrl() {
+    if (window.location.protocol === 'file:') return window.location.href.split('?')[0];
+    return window.location.origin + window.location.pathname;
+}
+
+function currentRoomId() {
+    if (roomCodeFull) return roomCodeFull;
+    if (gameState.roomCodeShort) return 'huroof-' + gameState.roomCodeShort;
+    return '';
+}
+
+function inviteUrl(team) {
+    let url = baseUrl() + '?room=' + encodeURIComponent(currentRoomId());
+    if (team === 'green' || team === 'orange') url += '&team=' + team;
+    return url;
+}
+
+/* ---------- initHost (rewritten): flags only after peer 'open'; timeout+retry ---------- */
+function initHost() {
+    if (isHost || hostInitializing) return;
+    if (typeof Peer === 'undefined') {
+        setConnectionStatus('تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.');
+        alert('تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.');
+        return;
+    }
+    const initLevel = document.getElementById('initial-level-select').value;
+    gameState.ageLevel = initLevel;
+    const lv = document.getElementById('live-level-select');
+    if (lv) lv.value = initLevel;
+    gameState.settings = {
+        mode: (document.getElementById('mode-select') || {}).value || '1v1',
+        stage: (document.getElementById('stage-select') || {}).value || 'easy',
+        timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
+        hostPlay: !!((document.getElementById('host-play-check') || {}).checked),
+        hostTeam: (document.getElementById('host-team-select') || {}).value || 'green'
+    };
+    gameState.turnSeconds = gameState.settings.timer;
+    gameState.stageIndex = STAGE_KEYS.indexOf(gameState.settings.stage);
+    if (gameState.stageIndex < 0) gameState.stageIndex = 0;
+    gameState.phase = 'lobby';
+    gameState.roster = [];
+    gameState.scores = { green: 0, orange: 0 };
+    gameState.winner = null;
+    gameState.stageWinner = null;
+    const hostName = ((document.getElementById('player-name-input') || {}).value || '').trim() || 'المقدم';
+    playerInfo = { name: hostName, team: gameState.settings.hostTeam };
+    if (gameState.settings.hostPlay) {
+        gameState.roster.push({ name: hostName, team: gameState.settings.hostTeam, ready: false, isHost: true, peerId: 'host' });
+    }
+    generateNewGrid();
+    hostAttempt.n = 0;
+    tryCreateHost();
+}
+
+function tryCreateHost() {
+    hostInitializing = true;
+    hostAttempt.n++;
+    const n = hostAttempt.n;
+    const status = 'جارٍ إنشاء الغرفة… (المحاولة ' + n + ' من ' + CONN_MAX_ATTEMPTS + ')';
+    setConnectionStatus(status);
+    const ls = document.getElementById('lobby-status');
+    if (ls) ls.textContent = status;
+    const roomId = 'huroof-' + genRoomCode4();
+    const p = new Peer(roomId);
+    peer = p;
+    let settled = false;
+    hostAttempt.timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { p.destroy(); } catch (e) {}
+        if (n < CONN_MAX_ATTEMPTS) {
+            setConnectionStatus('تعذّر الوصول إلى وسيط الاتصال، إعادة المحاولة…');
+            hostAttempt.timer = setTimeout(tryCreateHost, 900);
+        } else {
+            hostInitializing = false;
+            hostAttempt.n = 0;
+            hostAttempt.timer = null;
+            const msg = 'تعذّر إنشاء الغرفة بعد ' + CONN_MAX_ATTEMPTS + ' محاولات. تحقق من اتصال الإنترنت ثم اضغط «إنشاء غرفة» مجدداً.';
+            setConnectionStatus(msg);
+            if (ls) ls.textContent = msg;
+        }
+    }, CONN_HOST_TIMEOUT_MS);
+    p.on('open', (id) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(hostAttempt.timer);
+        hostAttempt.timer = null;
+        hostInitializing = false;
+        hostAttempt.n = 0;
+        isHost = true;
+        roomCodeFull = id;
+        gameState.roomCodeShort = id.replace(/^huroof-/, '');
+        setConnectionStatus('أنت مقدم المسابقة • الغرفة جاهزة');
+        const dr = document.getElementById('display-room-code');
+        if (dr) dr.textContent = gameState.roomCodeShort;
+        showRoomLobby();
+        renderUI();
+    });
+    p.on('connection', (conn) => {
+        if (!connections.includes(conn)) connections.push(conn);
+        conn.on('error', () => { setConnectionStatus('يوجد خلل باتصال أحد اللاعبين'); });
+        conn.on('data', (data) => handleHostReceive(conn, data));
+        conn.on('close', () => {
+            const wasPlayer = conn.playerName;
+            connections = connections.filter(c => c !== conn);
+            if (wasPlayer) {
+                gameState.roster = (gameState.roster || []).filter(r => r.peerId !== conn.peer);
+                if (gameState.phase === 'playing') {
+                    gameState.paused = { name: wasPlayer };
+                    renderUI();
+                    broadcastState();
+                } else {
+                    renderRoomLobby();
+                    updateConnectedPlayersList();
+                    broadcastState();
+                }
+            } else {
+                updateConnectedPlayersList();
+                broadcastState();
+            }
+        });
+    });
+    p.on('error', (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(hostAttempt.timer);
+        hostAttempt.timer = null;
+        try { p.destroy(); } catch (e) {}
+        const isTaken = err && err.type === 'unavailable-id';
+        if (n < CONN_MAX_ATTEMPTS) {
+            setConnectionStatus(isTaken ? 'الرمز مستخدم، جرّب رمزاً آخر…' : 'تعذّر إنشاء الغرفة، إعادة المحاولة…');
+            hostAttempt.timer = setTimeout(tryCreateHost, 900);
+        } else {
+            hostInitializing = false;
+            hostAttempt.n = 0;
+            const message = isTaken ? 'رمز الغرفة مستخدم؛ حاول إنشاء الغرفة مرة أخرى.' : 'تعذّر إنشاء الغرفة بعد ' + CONN_MAX_ATTEMPTS + ' محاولات. تحقق من اتصال الإنترنت ثم أعد المحاولة.';
+            setConnectionStatus(message);
+            const ls2 = document.getElementById('lobby-status');
+            if (ls2) ls2.textContent = message;
+        }
+    });
+}
+
+/* ---------- joinGame (rewritten): timeout+retry, error handler on the data conn ---------- */
+function joinGame(team) {
+    if (joinInitializing || (hostConn && hostConn.open)) return;
+    if (typeof Peer === 'undefined') {
+        document.getElementById('lobby-status').textContent = 'تعذّر تحميل مكتبة الاتصال (PeerJS). تحقق من الإنترنت وأعد تحميل الصفحة.';
+        return;
+    }
+    if (team !== 'green' && team !== 'orange') return;
+    const code = normalizeRoomCode(document.getElementById('room-code-input').value.trim());
+    const customName = document.getElementById('player-name-input').value.trim();
+    if (!code) {
+        alert('يرجى التأكد من وجود رمز الغرفة أولاً');
+        return;
+    }
+    lastJoinTeam = team;
+    playerInfo = { name: customName, team };
+    myReady = false;
+    joinAttempt.n = 0;
+    tryJoin(code, customName, team);
+}
+
+function retryJoin() {
+    const rb = document.getElementById('join-retry-btn');
+    if (rb) rb.style.display = 'none';
+    joinGame(lastJoinTeam);
+}
+
+function tryJoin(code, customName, team) {
+    joinInitializing = true;
+    joinAttempt.n++;
+    const n = joinAttempt.n;
+    const status = 'جارٍ الاتصال بالغرفة… (المحاولة ' + n + ' من ' + CONN_MAX_ATTEMPTS + ')';
+    setConnectionStatus(status);
+    const ls = document.getElementById('lobby-status');
+    if (ls) ls.textContent = status;
+    const rb = document.getElementById('join-retry-btn');
+    if (rb) rb.style.display = 'none';
+    const p = new Peer();
+    peer = p;
+    let settled = false;
+    const fail = (msg) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(joinAttempt.timer);
+        joinAttempt.timer = null;
+        try { p.destroy(); } catch (e) {}
+        if (n < CONN_MAX_ATTEMPTS) {
+            setConnectionStatus('تعذّر الاتصال، إعادة المحاولة…');
+            joinAttempt.timer = setTimeout(() => tryJoin(code, customName, team), 900);
+        } else {
+            joinInitializing = false;
+            joinAttempt.n = 0;
+            const finalMsg = (msg || 'تعذّر الاتصال بالغرفة.') + ' تحقق من الرمز والإنترنت ثم اضغط «إعادة المحاولة».';
+            if (ls) ls.textContent = finalMsg;
+            setConnectionStatus(finalMsg);
+            if (rb) rb.style.display = 'inline-flex';
+        }
+    };
+    joinAttempt.timer = setTimeout(() => fail('انتهت المهلة أثناء الاتصال بالغرفة.'), CONN_JOIN_TIMEOUT_MS);
+    p.on('open', () => {
+        const conn = p.connect(code);
+        hostConn = conn;
+        conn.on('open', () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(joinAttempt.timer);
+            joinAttempt.timer = null;
+            joinInitializing = false;
+            joinAttempt.n = 0;
+            setConnectionStatus('متصل بالمقدم');
+            showRoomLobby();
+            updatePlayerBadge();
+            conn.send({ type: 'JOIN', name: customName, team });
+        });
+        conn.on('error', () => fail('تعذّر فتح قناة الاتصال مع المقدم.'));
+        conn.on('close', () => {
+            if (!settled) { fail('أُغلق الاتصال قبل اكتمال الانضمام.'); return; }
+            joinInitializing = false;
+            setConnectionStatus('انقطع الاتصال بالمقدم');
+            const b = document.getElementById('conn-banner');
+            if (b) { b.style.display = 'block'; b.textContent = '⚠️ انقطع الاتصال بالمقدم'; }
+            const bb = document.getElementById('buzzer-btn');
+            if (bb) bb.disabled = true;
+            maybeTakeover();
+        });
+        conn.on('data', (data) => {
+            if (data.type === 'ASSIGNED_INFO') {
+                playerInfo.name = data.name;
+                playerInfo.team = data.team;
+                updatePlayerBadge();
+                renderRoomLobby();
+            } else if (data.type === 'REACTION') {
+                showReaction(data.emoji, data.name);
+            } else if (data.type === 'STATE' && data.state && Array.isArray(data.state.grid) && data.state.grid.length === 25) {
+                const prevExpired = gameState.timerExpired;
+                const prevBuzzed = gameState.buzzedPlayer;
+                gameState = { ...gameState, ...data.state };
+                if (!prevBuzzed && gameState.buzzedPlayer) playBuzzSound();
+                if (!prevExpired && gameState.timerExpired) playTimeUpSound();
+                if (gameState.phase === 'playing') {
+                    document.getElementById('room-lobby-screen').classList.remove('active');
+                    document.getElementById('lobby-screen').classList.remove('active');
+                    document.getElementById('game-screen').classList.add('active');
+                    document.getElementById('player-controls').style.display = 'block';
+                } else {
+                    document.getElementById('game-screen').classList.remove('active');
+                    document.getElementById('lobby-screen').classList.remove('active');
+                    document.getElementById('room-lobby-screen').classList.add('active');
+                }
+                renderUI();
+            }
+        });
+    });
+    p.on('error', (err) => {
+        const msg = err && err.type === 'peer-unavailable' ? 'الغرفة غير موجودة أو انتهت صلاحيتها. تحقق من الرمز.' : 'تعذّر الاتصال بالغرفة؛ تحقق من الإنترنت ورمز الغرفة.';
+        fail(msg);
+    });
+}
+
+/* ---------- copyInviteLink (rewritten): short code + TV link, anyone in room may copy ---------- */
+async function copyInviteLink(teamType) {
+    let url;
+    if (teamType === 'tv') {
+        url = baseUrl() + '?view=tv&room=' + encodeURIComponent(currentRoomId());
+    } else {
+        url = inviteUrl(teamType === 'green' || teamType === 'orange' ? teamType : 'any');
+    }
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(url);
+            alert('تم نسخ رابط الدعوة:\n' + url);
+        } else {
+            window.prompt('انسخ رابط الدعوة التالي:', url);
+        }
+    } catch (e) {
+        window.prompt('انسخ رابط الدعوة التالي:', url);
+    }
+}
+
+/* ---------- broadcastState (rewritten): extra fields, answer still NOT included ---------- */
+function broadcastState() {
+    const publicState = {
+        grid: gameState.grid,
+        selectedIdx: gameState.selectedIdx,
+        ageLevel: gameState.ageLevel,
+        questionText: gameState.questionText,
+        questionOptions: gameState.questionOptions || null,
+        questionType: gameState.questionType || '',
+        buzzedPlayer: gameState.buzzedPlayer,
+        timeLeft: gameState.timeLeft,
+        timerExpired: gameState.timerExpired,
+        winner: gameState.winner,
+        stageWinner: gameState.stageWinner || null,
+        stageIndex: gameState.stageIndex || 0,
+        turn: gameState.turn || 'green',
+        turnSeconds: gameState.turnSeconds || 60,
+        paused: gameState.paused || null,
+        lastMove: gameState.lastMove || '',
+        hintsUsed: gameState.hintsUsed || {},
+        phase: gameState.phase || 'lobby',
+        roster: gameState.roster || [],
+        settings: gameState.settings || {},
+        roomCodeShort: gameState.roomCodeShort || '',
+        bankStats: gameState.bankStats || { used: 0, total: 0, version: '' },
+        scores: gameState.scores
+    };
+    connections.forEach(conn => {
+        if (conn.open) {
+            try { conn.send({ type: 'STATE', state: publicState }); } catch (e) {}
+        }
+    });
+}
+
+/* ---------- handleHostReceive (rewritten): roster + READY/REACTION/PASS/HINT/LEAVE ---------- */
+function handleHostReceive(conn, data) {
+    if (!data || typeof data.type !== 'string') return;
+    if (data.type === 'JOIN') {
+        if (data.team !== 'green' && data.team !== 'orange') { try { conn.close(); } catch (e) {} return; }
+        let assignedName = typeof data.name === 'string' ? data.name.trim().slice(0, 30) : '';
+        if (!assignedName) {
+            playerCounter[data.team] = (playerCounter[data.team] || 0) + 1;
+            const teamAr = data.team === 'green' ? 'أخضر' : 'برتقالي';
+            assignedName = 'لاعب ' + teamAr + ' ' + playerCounter[data.team];
+        }
+        conn.playerName = assignedName;
+        conn.playerTeam = data.team;
+        const existing = (gameState.roster || []).find(r => r.peerId === conn.peer || (assignedName && r.name === assignedName));
+        if (!existing) {
+            gameState.roster.push({ name: assignedName, team: data.team, ready: gameState.phase === 'playing', isHost: false, peerId: conn.peer });
+        } else {
+            existing.name = assignedName;
+            existing.team = data.team;
+            existing.peerId = conn.peer;
+        }
+        conn.send({ type: 'ASSIGNED_INFO', name: assignedName, team: data.team });
+        updateConnectedPlayersList();
+        renderRoomLobby();
+        broadcastState();
+    } else if (data.type === 'READY') {
+        const entry = (gameState.roster || []).find(r => r.peerId === conn.peer);
+        if (entry) entry.ready = !!data.ready;
+        renderRoomLobby();
+        broadcastState();
+    } else if (data.type === 'SWITCH_TEAM') {
+        if (data.team !== 'green' && data.team !== 'orange') return;
+        conn.playerTeam = data.team;
+        const entry = (gameState.roster || []).find(r => r.peerId === conn.peer);
+        if (entry) entry.team = data.team;
+        updateConnectedPlayersList();
+        renderRoomLobby();
+        broadcastState();
+    } else if (data.type === 'BUZZ') {
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam) {
+            gameState.buzzedPlayer = { name: conn.playerName || 'لاعب', team: conn.playerTeam };
+            addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
+            playBuzzSound();
+            startHostTimer();
+        }
+    } else if (data.type === 'REACTION') {
+        if (!['👏', '😄', '🎉'].includes(data.emoji)) return;
+        showReaction(data.emoji, conn.playerName || 'لاعب');
+        connections.forEach(c => {
+            if (c !== conn && c.open) {
+                try { c.send({ type: 'REACTION', emoji: data.emoji, name: conn.playerName || 'لاعب' }); } catch (e) {}
+            }
+        });
+    } else if (data.type === 'PASS') {
+        if (conn.playerTeam === gameState.turn) doPassTurn();
+    } else if (data.type === 'HINT') {
+        applyHint(conn.playerName || 'لاعب');
+    } else if (data.type === 'LEAVE') {
+        gameState.roster = (gameState.roster || []).filter(r => r.peerId !== conn.peer);
+        renderRoomLobby();
+        updateConnectedPlayersList();
+        broadcastState();
+    }
+}
+
+function updateConnectedPlayersList() {
+    const roster = gameState.roster || [];
+    const names = roster.map(p => p.name + ' (' + (p.team === 'green' ? '🟢' : '🟠') + ')');
+    const pc = document.getElementById('players-count');
+    if (pc) pc.textContent = String(roster.length);
+    const cp = document.getElementById('connected-players');
+    if (cp) cp.textContent = names.length ? names.join(' ، ') : 'لا يوجد بعد';
+}
+
+/* ---------- window.onload (rewritten): TV param + room/team params ---------- */
+window.onload = () => {
+    if (typeof loadBank === 'function') loadBank();
+    updateMuteButtons();
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    const roomParam = params.get('room');
+    const teamParam = params.get('team');
+    if (viewParam === 'tv' && roomParam) {
+        if (typeof startTvView === 'function') { startTvView(roomParam); return; }
+    }
+    if (roomParam) {
+        document.getElementById('room-code-input').value = roomParam;
+        document.getElementById('host-create-section').style.display = 'none';
+        document.getElementById('room-code-wrapper').style.display = 'none';
+        if (teamParam === 'green' || teamParam === 'orange') {
+            setTimeout(() => joinGame(teamParam), 500);
+        }
+    }
+};
+
+/* ---------- room lobby ---------- */
+function showRoomLobby() {
+    document.getElementById('lobby-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('room-lobby-screen').classList.add('active');
+    const url = inviteUrl('any');
+    const qrText = document.getElementById('qr-link-text');
+    if (qrText) qrText.textContent = url;
+    try { drawQR(document.getElementById('qr-canvas'), url); } catch (e) {}
+    renderRoomLobby();
+}
+
+function turnPlayerName(team) {
+    const r = (gameState.roster || []).find(p => p.team === team);
+    if (r) return r.name;
+    return team === 'green' ? 'الفريق الأخضر' : 'الفريق البرتقالي';
+}
+
+function renderRoomLobby() {
+    const codeEl = document.getElementById('lobby-room-code');
+    if (codeEl) codeEl.textContent = gameState.roomCodeShort || currentRoomId().replace(/^huroof-/, '') || '····';
+    const list = document.getElementById('lobby-players-list');
+    if (list) {
+        list.innerHTML = '';
+        const roster = gameState.roster || [];
+        if (!roster.length) {
+            list.innerHTML = '<p style="color:#94a3b8;">بانتظار انضمام اللاعبين…</p>';
+        }
+        roster.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'lobby-player';
+            const av = document.createElement('div');
+            av.className = 'avatar ' + (p.team === 'green' ? 'avatar-green' : 'avatar-orange');
+            av.textContent = (p.name || '؟').trim().charAt(0);
+            const nm = document.createElement('div');
+            const strong = document.createElement('strong');
+            strong.textContent = p.name;
+            const teamSpan = document.createElement('span');
+            teamSpan.textContent = ' — ' + (p.team === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠') + (p.isHost ? ' (المقدم)' : '');
+            nm.appendChild(strong);
+            nm.appendChild(teamSpan);
+            const tag = document.createElement('span');
+            tag.className = 'ready-tag ' + (p.ready ? 'ready-yes' : 'ready-no');
+            tag.textContent = p.ready ? 'جاهز ✅' : 'بانتظار… ⏳';
+            div.appendChild(av);
+            div.appendChild(nm);
+            div.appendChild(tag);
+            list.appendChild(div);
+        });
+    }
+    const sum = document.getElementById('lobby-settings-summary');
+    if (sum) {
+        const s = gameState.settings || {};
+        sum.textContent = 'الوضع: ' + (s.mode === '2v2' ? '4 لاعبين (2 ضد 2)' : 'لاعبان (1 ضد 1)') + ' • المرحلة: ' + (STAGE_NAMES[s.stage] || 'سهل') + ' • المؤقّت: ' + (s.timer === 0 ? 'بدون مؤقّت' : (s.timer || 60) + ' ثانية');
+    }
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) startBtn.style.display = isHost ? 'block' : 'none';
+    const readyBtn = document.getElementById('ready-btn');
+    if (readyBtn) {
+        readyBtn.textContent = myReady ? 'جاهز ✅ (اضغط للإلغاء)' : 'أنا جاهز ✅';
+        readyBtn.className = 'btn ' + (myReady ? 'btn-gray' : 'btn-green');
+    }
+    const hint = document.getElementById('lobby-start-hint');
+    if (hint) {
+        if (isHost) {
+            const n = (gameState.roster || []).length;
+            const need = (gameState.settings && gameState.settings.mode === '2v2') ? 4 : 2;
+            const allReady = (gameState.roster || []).every(p => p.ready);
+            hint.textContent = n < need ? ('يلزم ' + need + ' لاعبين للبدء (الحالي: ' + n + ')') : (!allReady ? 'بانتظار جاهزية جميع اللاعبين…' : 'الجميع جاهز — اضغط «ابدأ اللعب»!');
+        } else {
+            hint.textContent = '';
+        }
+    }
+}
+
+function toggleReady() {
+    myReady = !myReady;
+    if (isHost) {
+        const me = (gameState.roster || []).find(p => p.isHost);
+        if (me) me.ready = myReady;
+        renderRoomLobby();
+        broadcastState();
+    } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'READY', ready: myReady });
+        renderRoomLobby();
+    }
+}
+
+function startGame() {
+    if (!isHost) return;
+    const roster = gameState.roster || [];
+    const need = (gameState.settings && gameState.settings.mode === '2v2') ? 4 : 2;
+    if (roster.length < need) {
+        document.getElementById('lobby-start-hint').textContent = 'يلزم ' + need + ' لاعبين للبدء (الحالي: ' + roster.length + ')';
+        return;
+    }
+    if (!roster.every(p => p.ready)) {
+        document.getElementById('lobby-start-hint').textContent = 'بانتظار جاهزية جميع اللاعبين…';
+        return;
+    }
+    gameState.phase = 'playing';
+    gameState.stageIndex = STAGE_KEYS.indexOf(gameState.settings.stage || 'easy');
+    if (gameState.stageIndex < 0) gameState.stageIndex = 0;
+    gameState.turn = 'green';
+    gameState.scores = { green: 0, orange: 0 };
+    gameState.winner = null;
+    gameState.stageWinner = null;
+    gameState.paused = null;
+    gameState.hintsUsed = {};
+    generateNewGrid();
+    moveHistory = [];
+    document.getElementById('room-lobby-screen').classList.remove('active');
+    document.getElementById('lobby-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    document.getElementById('host-info-bar').style.display = 'block';
+    document.getElementById('host-controls').style.display = 'block';
+    if (gameState.settings.hostPlay) document.getElementById('player-controls').style.display = 'block';
+    renderUI();
+    broadcastState();
+}
+
+function leaveRoom() {
+    try { if (hostConn && hostConn.open) hostConn.send({ type: 'LEAVE' }); } catch (e) {}
+    try { if (peer && !peer.destroyed) peer.destroy(); } catch (e) {}
+    peer = null;
+    hostConn = null;
+    connections = [];
+    isHost = false;
+    hostInitializing = false;
+    joinInitializing = false;
+    hostAttempt.n = 0;
+    if (hostAttempt.timer) { clearTimeout(hostAttempt.timer); hostAttempt.timer = null; }
+    joinAttempt.n = 0;
+    if (joinAttempt.timer) { clearTimeout(joinAttempt.timer); joinAttempt.timer = null; }
+    myReady = false;
+    gameState.phase = 'lobby';
+    gameState.roster = [];
+    gameState.paused = null;
+    document.getElementById('room-lobby-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('lobby-screen').classList.add('active');
+    document.getElementById('host-create-section').style.display = 'block';
+    document.getElementById('room-code-wrapper').style.display = 'block';
+    setConnectionStatus('');
+}
+
+function backToLobby() {
+    if (gameState.solo) { window.location.reload(); return; }
+    leaveRoom();
+}
+
+function rematch() {
+    if (!isHost) return;
+    gameState.scores = { green: 0, orange: 0 };
+    gameState.stageIndex = STAGE_KEYS.indexOf(gameState.settings.stage || 'easy');
+    if (gameState.stageIndex < 0) gameState.stageIndex = 0;
+    gameState.winner = null;
+    gameState.stageWinner = null;
+    gameState.hintsUsed = {};
+    gameState.paused = null;
+    gameState.phase = 'playing';
+    generateNewGrid();
+    moveHistory = [];
+    document.getElementById('final-screen').classList.remove('show');
+    renderUI();
+    broadcastState();
+}
+
+function startSinglePlayer() {
+    isHost = true;
+    gameState.solo = true;
+    gameState.phase = 'playing';
+    gameState.settings = {
+        mode: '1v1',
+        stage: (document.getElementById('stage-select') || {}).value || 'easy',
+        timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
+        hostPlay: true,
+        hostTeam: 'green'
+    };
+    gameState.turnSeconds = gameState.settings.timer;
+    gameState.stageIndex = STAGE_KEYS.indexOf(gameState.settings.stage);
+    if (gameState.stageIndex < 0) gameState.stageIndex = 0;
+    gameState.ageLevel = document.getElementById('initial-level-select').value;
+    gameState.turn = 'green';
+    gameState.roster = [{ name: 'أنت', team: 'green', ready: true, isHost: true, peerId: 'solo' }];
+    gameState.scores = { green: 0, orange: 0 };
+    playerInfo = { name: 'أنت', team: 'green' };
+    generateNewGrid();
+    document.getElementById('lobby-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    document.getElementById('host-info-bar').style.display = 'none';
+    document.getElementById('host-controls').style.display = 'block';
+    document.getElementById('player-controls').style.display = 'block';
+    renderUI();
+}
+
+function continueWithout(name) {
+    if (!isHost) return;
+    gameState.roster = (gameState.roster || []).filter(r => r.name !== name);
+    gameState.paused = null;
+    gameState.lastMove = 'غادر ' + name + ' — أكملنا اللعب بدونه';
+    updateConnectedPlayersList();
+    renderUI();
+    broadcastState();
+}
+
+/* Host-takeover placeholder: full election/rejoin logic lands in Phase 3. */
+function maybeTakeover() {
+    const st = document.getElementById('room-lobby-status');
+    if (st) st.textContent = 'غادر المقدم الغرفة.';
+}
+
+/* ===== QR encoder (inline, no CDN) — verified vs python-qrcode ===== */
+/* Compact QR encoder (byte mode, EC level L, versions 1-6, mask auto-pick).
+   No dependencies. Returns { version, size, modules } where modules[y][x] is 0/1.
+   Written for the huroof-game; verified against segno matrices. */
+function makeQRMatrix(text) {
+    const bytes = [];
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        if (c < 128) bytes.push(c);
+        else if (c < 2048) { bytes.push(0xC0 | (c >> 6), 0x80 | (c & 63)); }
+        else if (c < 65536) { bytes.push(0xE0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63)); }
+        else { bytes.push(0xF0 | (c >> 18), 0x80 | ((c >> 12) & 63), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63)); }
+    }
+    // version tables (EC level L)
+    const DATA_CW = [19, 34, 55, 80, 108, 136];
+    const EC_CW = [7, 10, 15, 20, 26, 18];
+    const BLOCKS = [1, 1, 1, 1, 1, 2];
+    const ALIGN = [[], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34]];
+    let version = -1;
+    for (let v = 0; v < 6; v++) {
+        const bits = 4 + 8 + bytes.length * 8;
+        if (Math.ceil(bits / 8) <= DATA_CW[v]) { version = v + 1; break; }
+    }
+    if (version < 0) throw new Error('النص طويل جداً لرمز QR');
+    const vi = version - 1;
+    const dataCw = DATA_CW[vi], ecCw = EC_CW[vi], nBlocks = BLOCKS[vi];
+
+    // --- Galois field GF(256) ---
+    const EXP = new Array(512), LOG = new Array(256);
+    let x = 1;
+    for (let i = 0; i < 255; i++) { EXP[i] = x; LOG[x] = i; x <<= 1; if (x & 0x100) x ^= 0x11d; }
+    for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
+    function gfMul(a, b) { return (a === 0 || b === 0) ? 0 : EXP[LOG[a] + LOG[b]]; }
+    function rsDivisor(degree) {
+        let poly = [1];
+        for (let i = 0; i < degree; i++) {
+            const next = new Array(poly.length + 1).fill(0);
+            for (let j = 0; j < poly.length; j++) {
+                next[j] ^= gfMul(poly[j], EXP[i]);
+                next[j + 1] ^= poly[j];
+            }
+            poly = next;
+        }
+        return poly;
+    }
+    function rsRemainder(data, divisor) {
+        // divisor is low->high (divisor[i] = coeff of x^i), length degree+1,
+        // leading 1 last. Register method: factor from the top coefficient,
+        // shift up one degree, XOR factor * (divisor without its leading term).
+        // Returns EC codewords in transmission order (highest degree first).
+        const deg = divisor.length - 1;
+        const res = new Array(deg).fill(0); // low->high
+        for (const b of data) {
+            const factor = b ^ res[deg - 1];
+            for (let i = deg - 1; i > 0; i--) res[i] = res[i - 1];
+            res[0] = 0;
+            for (let i = 0; i < deg; i++) res[i] ^= gfMul(divisor[i], factor);
+        }
+        return res.slice().reverse();
+    }
+
+    // --- data codewords ---
+    const bits = [];
+    function putBits(val, len) { for (let i = len - 1; i >= 0; i--) bits.push((val >> i) & 1); }
+    putBits(0x4, 4); // byte mode
+    putBits(bytes.length, 8);
+    for (const b of bytes) putBits(b, 8);
+    const cap = dataCw * 8;
+    putBits(0, Math.min(4, cap - bits.length)); // terminator
+    while (bits.length % 8 !== 0) bits.push(0);
+    const dataBytes = [];
+    for (let i = 0; i < bits.length; i += 8) {
+        let v = 0; for (let j = 0; j < 8; j++) v = (v << 1) | bits[i + j];
+        dataBytes.push(v);
+    }
+    const pads = [0xEC, 0x11];
+    const startLen = dataBytes.length;
+    for (let i = startLen; i < dataCw; i++) dataBytes.push(pads[(i - startLen) % 2]);
+
+    // --- split into blocks, EC, interleave ---
+    const perBlock = Math.floor(dataCw / nBlocks);
+    const extra = dataCw % nBlocks; // first `extra` blocks get +1 (only v6: 68/68, extra 0)
+    const blocks = [];
+    let off = 0;
+    for (let b = 0; b < nBlocks; b++) {
+        const len = perBlock + (b < extra ? 1 : 0);
+        const d = dataBytes.slice(off, off + len); off += len;
+        const div = rsDivisor(ecCw);
+        const ec = rsRemainder(d, div).slice(-ecCw);
+        blocks.push({ data: d, ec });
+    }
+    const allCw = [];
+    const maxDataLen = Math.max(...blocks.map(b => b.data.length));
+    for (let i = 0; i < maxDataLen; i++) for (const bl of blocks) if (i < bl.data.length) allCw.push(bl.data[i]);
+    for (let i = 0; i < ecCw; i++) for (const bl of blocks) allCw.push(bl.ec[i]);
+    const allBits = [];
+    for (const cw of allCw) for (let i = 7; i >= 0; i--) allBits.push((cw >> i) & 1);
+
+    // --- matrix ---
+    const size = 21 + (version - 1) * 4;
+    const mod = [], fn = [];
+    for (let y = 0; y < size; y++) { mod.push(new Array(size).fill(0)); fn.push(new Array(size).fill(false)); }
+    function setFn(y, x, v) { mod[y][x] = v; fn[y][x] = true; }
+    function finder(cy, cx) {
+        for (let dy = -1; dy <= 7; dy++) for (let dx = -1; dx <= 7; dx++) {
+            const y = cy + dy, x = cx + dx;
+            if (y < 0 || y >= size || x < 0 || x >= size) continue;
+            const inPat = dy >= 0 && dy <= 6 && dx >= 0 && dx <= 6;
+            const dark = inPat && (dy === 0 || dy === 6 || dx === 0 || dx === 6 || (dy >= 2 && dy <= 4 && dx >= 2 && dx <= 4));
+            setFn(y, x, dark ? 1 : 0);
+        }
+    }
+    finder(0, 0); finder(0, size - 7); finder(size - 7, 0);
+    for (let i = 8; i < size - 8; i++) { setFn(6, i, i % 2 === 0 ? 1 : 0); setFn(i, 6, i % 2 === 0 ? 1 : 0); }
+    for (const cy of ALIGN[vi]) for (const cx of ALIGN[vi]) {
+        const nearFinder = (cy <= 8 && cx <= 8) || (cy <= 8 && cx >= size - 9) || (cy >= size - 9 && cx <= 8);
+        if (nearFinder) continue;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++)
+            setFn(cy + dy, cx + dx, (Math.abs(dy) === 2 || Math.abs(dx) === 2 || (dy === 0 && dx === 0)) ? 1 : 0);
+    }
+    setFn(4 * version + 9, 8, 1); // dark module
+    // reserve format info areas
+    for (let i = 0; i < 9; i++) { if (i !== 6) { fn[8][i] = true; fn[i][8] = true; } }
+    for (let i = 0; i < 8; i++) { fn[8][size - 1 - i] = true; fn[size - 1 - i][8] = true; }
+    fn[8][size - 8] = true;
+
+    // --- data placement (zigzag) ---
+    let bitIdx = 0, upward = true;
+    for (let col = size - 1; col > 0; col -= 2) {
+        if (col === 6) col--;
+        for (let r = 0; r < size; r++) {
+            const y = upward ? size - 1 - r : r;
+            for (let c = 0; c < 2; c++) {
+                const x = col - c;
+                if (fn[y][x]) continue;
+                mod[y][x] = bitIdx < allBits.length ? allBits[bitIdx++] : 0;
+            }
+        }
+        upward = !upward;
+    }
+
+    // --- format info ---
+    function formatBits(mask) {
+        const ecBits = 0x01; // L
+        let data = (ecBits << 3) | mask;
+        let rem = data;
+        for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >> 9 & 1) ? 0x537 : 0);
+        return ((data << 10) | rem) ^ 0x5412;
+    }
+    function applyFormat(mask) {
+        const f = formatBits(mask);
+        const bit = i => (f >> i) & 1;
+        for (let i = 0; i <= 5; i++) setFn(8, i, bit(14 - i));
+        setFn(8, 7, bit(8)); setFn(8, 8, bit(7)); setFn(7, 8, bit(6));
+        for (let i = 0; i <= 5; i++) setFn(i, 8, bit(i));
+        for (let i = 0; i < 8; i++) setFn(8, size - 1 - i, bit(i));
+        for (let i = 8; i < 15; i++) setFn(size - 15 + i, 8, bit(i));
+    }
+
+    // --- masks ---
+    function maskBit(mask, y, x) {
+        switch (mask) {
+            case 0: return (y + x) % 2 === 0;
+            case 1: return y % 2 === 0;
+            case 2: return x % 3 === 0;
+            case 3: return (y + x) % 3 === 0;
+            case 4: return (Math.floor(y / 2) + Math.floor(x / 3)) % 2 === 0;
+            case 5: return (y * x) % 2 + (y * x) % 3 === 0;
+            case 6: return ((y * x) % 2 + (y * x) % 3) % 2 === 0;
+            default: return ((y + x) % 2 + (y * x) % 3) % 2 === 0;
+        }
+    }
+    function penalty(m) {
+        let score = 0;
+        for (let y = 0; y < size; y++) {
+            let run = 1, prev = m[y][0];
+            for (let x = 1; x < size; x++) {
+                if (m[y][x] === prev) run++;
+                else { if (run >= 5) score += 3 + (run - 5); run = 1; prev = m[y][x]; }
+            }
+            if (run >= 5) score += 3 + (run - 5);
+        }
+        for (let x = 0; x < size; x++) {
+            let run = 1, prev = m[0][x];
+            for (let y = 1; y < size; y++) {
+                if (m[y][x] === prev) run++;
+                else { if (run >= 5) score += 3 + (run - 5); run = 1; prev = m[y][x]; }
+            }
+            if (run >= 5) score += 3 + (run - 5);
+        }
+        for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++)
+            if (m[y][x] === m[y][x + 1] && m[y][x] === m[y + 1][x] && m[y][x] === m[y + 1][x + 1]) score += 3;
+        const pat = [1, 0, 1, 1, 1, 0, 1];
+        function hasPat(arr, i) {
+            for (let k = 0; k < 7; k++) if (arr[i + k] !== pat[k]) return false;
+            const before = i >= 4 && arr.slice(i - 4, i).every(v => v === 0);
+            const after = i + 11 <= arr.length && arr.slice(i + 7, i + 11).every(v => v === 0);
+            return before || after;
+        }
+        for (let y = 0; y < size; y++) for (let x = 0; x <= size - 7; x++) if (hasPat(m[y], x)) score += 40;
+        for (let x = 0; x < size; x++) { const col = []; for (let y = 0; y < size; y++) col.push(m[y][x]); for (let y = 0; y <= size - 7; y++) if (hasPat(col, y)) score += 40; }
+        let dark = 0;
+        for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) dark += m[y][x];
+        const percent = dark * 100 / (size * size);
+        score += Math.floor(Math.abs(percent - 50) / 5) * 10;
+        return score;
+    }
+    let bestMask = 0, bestScore = Infinity, bestMod = null;
+    for (let mask = 0; mask < 8; mask++) {
+        const trial = mod.map(row => row.slice());
+        for (let y = 0; y < size; y++) for (let x = 0; x < size; x++)
+            if (!fn[y][x] && maskBit(mask, y, x)) trial[y][x] ^= 1;
+        const s = penalty(trial);
+        if (s < bestScore) { bestScore = s; bestMask = mask; bestMod = trial; }
+    }
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) mod[y][x] = bestMod[y][x];
+    applyFormat(bestMask);
+    return { version, size, mask: bestMask, modules: mod };
+}
+
+function drawQR(canvas, text) {
+    const qr = makeQRMatrix(text);
+    const quiet = 4, n = qr.size + quiet * 2;
+    const scale = Math.max(2, Math.floor(canvas.width / n));
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    for (let y = 0; y < qr.size; y++) for (let x = 0; x < qr.size; x++)
+        if (qr.modules[y][x]) ctx.fillRect((x + quiet) * scale, (y + quiet) * scale, scale, scale);
+    return qr;
+}
+
+/* ===== Edit A2 (part 2): bank loader, reactions, hints, pass, mute, extra UI ===== */
+
+/* ---------- bank loader: questions.json first, embedded bank as fallback ---------- */
+let BANK = null;
+const USED_KEY = 'huroof-used-v2';
+let usedStore = {};
+try { usedStore = JSON.parse(localStorage.getItem(USED_KEY) || '{}'); } catch (e) { usedStore = {}; }
+function saveUsedStore() {
+    try { localStorage.setItem(USED_KEY, JSON.stringify(usedStore)); } catch (e) {}
+}
+function usedKey(section, levelOrLetter) { return section + ':' + (levelOrLetter || ''); }
+
+function normalizeBank(json) {
+    // questions.json shape: { meta: {version, sections:[names]}, words:{...}, quiz:{...}, ... }
+    // Sections are TOP-LEVEL keys (not under json.sections).
+    // Returns { sections: {words:{level:{letter:[items]}}, quiz:{level:[items]}, ...}, total, version }
+    const sections = {};
+    let total = 0;
+    const countItems = (obj) => {
+        if (Array.isArray(obj)) return obj.length;
+        if (obj && typeof obj === 'object') return Object.values(obj).reduce((a, v) => a + countItems(v), 0);
+        return 0;
+    };
+    if (json && typeof json === 'object') {
+        const names = (json.meta && Array.isArray(json.meta.sections) && json.meta.sections.length)
+            ? json.meta.sections
+            : Object.keys(json).filter(k => k !== 'meta');
+        names.forEach(name => {
+            if (json[name]) {
+                sections[name] = json[name];
+                total += countItems(json[name]);
+            }
+        });
+    }
+    return { sections, total, version: (json && json.meta && json.meta.version) ? String(json.meta.version) : '' };
+}
+
+function embeddedBankFallback() {
+    // Convert embedded QUESTIONS_BY_AGE into the same shape the picker expects.
+    const sections = { words: { easy: {}, medium: {}, hard: {}, expert: {} } };
+    const letters = Object.keys(QUESTIONS_BY_AGE);
+    let total = 0;
+    const levelMap = { '10-15': 'easy', '15-20': 'medium', '20-25': 'hard', '25-50': 'expert' };
+    letters.forEach(letter => {
+        Object.entries(QUESTIONS_BY_AGE[letter]).forEach(([age, items]) => {
+            const lvl = levelMap[age];
+            if (!lvl) return;
+            if (!sections.words[lvl][letter]) sections.words[lvl][letter] = [];
+            items.forEach(it => {
+                sections.words[lvl][letter].push({ q: it.q, answer: it.a });
+                total++;
+            });
+        });
+    });
+    return { sections, total, version: 'embedded' };
+}
+
+function renderBankStatus() {
+    const bs = document.getElementById('bank-status');
+    if (bs) {
+        if (BANK) {
+            const used = usedCountTotal();
+            bs.textContent = 'بنك الأسئلة: ' + BANK.total + ' سؤالاً (إصدار ' + (BANK.version || '؟') + ') • استُخدم ' + used + ' من ' + BANK.total;
+        } else {
+            bs.textContent = 'جارٍ تحميل بنك الأسئلة…';
+        }
+    }
+    const hb = document.getElementById('host-bank-line');
+    if (hb && gameState.bankStats) {
+        hb.textContent = 'بنك الأسئلة: استُخدم ' + gameState.bankStats.used + ' من ' + gameState.bankStats.total + (gameState.bankStats.version ? ' (إصدار ' + gameState.bankStats.version + ')' : '');
+    }
+}
+
+function usedCountTotal() {
+    return Object.values(usedStore).reduce((a, v) => a + (Array.isArray(v) ? v.length : 0), 0);
+}
+
+function updateBankStats() {
+    if (!BANK) { gameState.bankStats = { used: 0, total: 0, version: '' }; return; }
+    gameState.bankStats = { used: usedCountTotal(), total: BANK.total, version: BANK.version || '' };
+}
+
+async function loadBank() {
+    try {
+        const res = await fetch('questions.json', { cache: 'default' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        const nb = normalizeBank(json);
+        if (!nb.total) throw new Error('empty bank');
+        BANK = nb;
+    } catch (e) {
+        BANK = embeddedBankFallback();
+    }
+    updateBankStats();
+    renderBankStatus();
+}
+
+async function refreshBank() {
+    const bs = document.getElementById('bank-status');
+    if (bs) bs.textContent = 'جارٍ تحديث بنك الأسئلة…';
+    try {
+        if (BANK) {
+            try { localStorage.setItem('huroof-bank-backup', JSON.stringify(BANK)); } catch (e) {}
+        }
+        const res = await fetch('questions.json', { cache: 'reload' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const json = await res.json();
+        const nb = normalizeBank(json);
+        if (!nb.total) throw new Error('empty bank');
+        BANK = nb;
+        updateBankStats();
+        renderBankStatus();
+        if (bs) bs.textContent = '✅ تم تحديث بنك الأسئلة — ' + BANK.total + ' سؤالاً (إصدار ' + (BANK.version || '؟') + ')';
+    } catch (e) {
+        if (bs) bs.textContent = 'تعذّر التحديث — ما زال البنك الحالي يعمل (' + (BANK ? BANK.total : 0) + ' سؤالاً).';
+    }
+}
+
+function resetUsedCycle() {
+    if (!confirm('تصفير عدّاد الاستخدام؟ ستُتاح كل الأسئلة من جديد.')) return;
+    usedStore = {};
+    saveUsedStore();
+    updateBankStats();
+    renderBankStatus();
+    if (isHost) broadcastState();
+}
+
+/* ---------- reactions / hints / pass / mute / sounds ---------- */
+function sendReaction(emoji) {
+    if (!['👏', '😄', '🎉'].includes(emoji)) return;
+    showReaction(emoji, playerInfo.name || 'لاعب');
+    if (isHost) {
+        connections.forEach(conn => {
+            if (conn.open) { try { conn.send({ type: 'REACTION', emoji, name: playerInfo.name || 'المقدم' }); } catch (e) {} }
+        });
+    } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'REACTION', emoji, name: playerInfo.name || 'لاعب' });
+    }
+}
+
+function showReaction(emoji, name) {
+    const box = document.getElementById('reactions-float');
+    if (!box) return;
+    const s = document.createElement('span');
+    s.className = 'float-emoji';
+    s.textContent = emoji;
+    s.style.left = (Math.random() * 120 - 60) + 'px';
+    s.title = name || '';
+    box.appendChild(s);
+    setTimeout(() => s.remove(), 2700);
+}
+
+function useHint() {
+    const me = playerInfo.name || 'لاعب';
+    const used = (gameState.hintsUsed && gameState.hintsUsed[me]) || 0;
+    if (used >= 3) { alert('استنفدت التلميحات الثلاثة لهذه اللعبة.'); return; }
+    if (gameState.selectedIdx === null || gameState.selectedIdx === undefined) { alert('اختر حرفاً أولاً.'); return; }
+    if (isHost) {
+        applyHint(me);
+    } else if (hostConn && hostConn.open) {
+        hostConn.send({ type: 'HINT', name: me });
+    }
+}
+
+function applyHint(name) {
+    gameState.hintsUsed = gameState.hintsUsed || {};
+    gameState.hintsUsed[name] = (gameState.hintsUsed[name] || 0) + 1;
+    let hintText = gameState.questionHint || '';
+    if (!hintText) {
+        const a = gameState.answerText || '';
+        if (a && a !== '-') {
+            hintText = 'الإجابة من ' + a.length + ' أحرف';
+        } else {
+            hintText = 'لا يوجد تلميح لهذا السؤال';
+        }
+    }
+    gameState.lastMove = '💡 تلميح لـ ' + name + ': ' + hintText + ' (بقي ' + Math.max(0, 3 - gameState.hintsUsed[name]) + ' من 3)';
+    renderUI();
+    broadcastState();
+}
+
+function passTurn() {
+    if (isHost) { doPassTurn(); return; }
+    if (hostConn && hostConn.open) hostConn.send({ type: 'PASS' });
+}
+
+function doPassTurn() {
+    if (!isHost || gameState.winner) return;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timerExpired = false;
+    gameState.timeLeft = 0;
+    gameState.turn = gameState.turn === 'green' ? 'orange' : 'green';
+    gameState.lastMove = '⏭️ تم تمرير الدور إلى ' + (gameState.turn === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠');
+    gameState.questionText = 'اختر حرفاً من الشبكة لبدء السؤال';
+    gameState.answerText = '-';
+    gameState.selectedIdx = null;
+    gameState.questionOptions = null;
+    gameState.questionHint = '';
+    renderUI();
+    broadcastState();
+}
+
+function toggleMute() {
+    soundOn = !soundOn;
+    try { localStorage.setItem('huroof-sound', soundOn ? 'on' : 'off'); } catch (e) {}
+    updateMuteButtons();
+}
+
+function updateMuteButtons() {
+    document.querySelectorAll('.mute-btn').forEach(b => { b.textContent = soundOn ? '🔊' : '🔇'; });
+}
+
+/* Mute-aware wrappers over the original sound functions (F3 fixed the sawtooth bug). */
+const _playBuzzSound = playBuzzSound;
+playBuzzSound = function () { if (soundOn) _playBuzzSound(); };
+const _playTickSound = playTickSound;
+playTickSound = function () { if (soundOn) _playTickSound(); };
+const _playTimeUpSound = playTimeUpSound;
+playTimeUpSound = function () { if (soundOn) _playTimeUpSound(); };
+
+function playPopSound() {
+    if (!soundOn) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(520, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.16);
+    } catch (e) {}
+}
+
+function playCheerSound() {
+    if (!soundOn) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [523, 659, 784, 1047].forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + i * 0.12 + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.45);
+        });
+    } catch (e) {}
+}
+
+/* ---------- sendBuzz (override): host-playing host buzzes locally ---------- */
+const _origSendBuzz = sendBuzz;
+sendBuzz = function () {
+    if (isHost && gameState.settings && gameState.settings.hostPlay) {
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
+            gameState.buzzedPlayer = { name: playerInfo.name || 'المقدم', team: playerInfo.team || 'green' };
+            addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
+            playBuzzSound();
+            startHostTimer();
+            renderUI();
+            broadcastState();
+        }
+        return;
+    }
+    _origSendBuzz();
+};
+
+/* ---------- extra UI rendering, hooked into renderUI ---------- */
+function renderExtraUI() {
+    const turnBar = document.getElementById('turn-bar');
+    if (turnBar) {
+        if (gameState.phase === 'playing' && !gameState.solo && gameState.turn) {
+            turnBar.textContent = 'دور: ' + turnPlayerName(gameState.turn) + (gameState.turn === 'green' ? ' 🟢' : ' 🟠');
+            turnBar.className = gameState.turn === 'green' ? 'turn-green' : 'turn-orange';
+        } else if (gameState.phase === 'playing' && gameState.solo) {
+            turnBar.textContent = 'لعب فردي 🎮';
+            turnBar.className = 'turn-green';
+        } else {
+            turnBar.className = '';
+            turnBar.textContent = '';
+        }
+    }
+    const optBox = document.getElementById('question-options');
+    if (optBox) {
+        optBox.innerHTML = '';
+        const opts = gameState.questionOptions;
+        if (opts && opts.length) {
+            opts.forEach((opt) => {
+                const b = document.createElement('button');
+                b.className = 'opt-btn';
+                b.type = 'button';
+                b.textContent = opt;
+                optBox.appendChild(b);
+            });
+        }
+    }
+    const lm = document.getElementById('last-move');
+    if (lm) lm.textContent = gameState.lastMove || '—';
+    const lvl = document.getElementById('current-level-badge');
+    if (lvl) lvl.textContent = 'المرحلة: ' + (STAGE_NAMES[STAGE_KEYS[gameState.stageIndex]] || 'سهل') + ' • ' + (LEVEL_NAMES[gameState.ageLevel] || 'جميع الأعمار');
+    const pb = document.getElementById('pause-banner');
+    if (pb) {
+        if (gameState.paused) {
+            pb.style.display = 'block';
+            pb.innerHTML = '';
+            const t = document.createElement('div');
+            t.textContent = '⏸️ ننتظر: ' + gameState.paused.name;
+            pb.appendChild(t);
+            if (isHost) {
+                const row = document.createElement('div');
+                row.className = 'flex-row';
+                row.style.marginTop = '10px';
+                const b1 = document.createElement('button');
+                b1.className = 'btn btn-primary';
+                b1.textContent = 'انتظار';
+                b1.type = 'button';
+                const b2 = document.createElement('button');
+                b2.className = 'btn btn-gray';
+                b2.textContent = 'أكمل بدونه';
+                b2.type = 'button';
+                const nm = gameState.paused.name;
+                b2.onclick = () => continueWithout(nm);
+                row.appendChild(b1);
+                row.appendChild(b2);
+                pb.appendChild(row);
+            }
+        } else {
+            pb.style.display = 'none';
+        }
+    }
+    const sb = document.getElementById('stage-banner');
+    const nsb = document.getElementById('next-stage-btn');
+    if (sb) {
+        if (gameState.stageWinner && gameState.stageIndex < 3) {
+            sb.style.display = 'block';
+            sb.textContent = '🎉 اكتملت مرحلة ' + STAGE_NAMES[STAGE_KEYS[gameState.stageIndex]] + '! الفريق الفائز بالمرحلة: ' + (gameState.stageWinner === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠');
+            if (nsb && isHost) nsb.style.display = 'inline-flex';
+        } else {
+            sb.style.display = 'none';
+            if (nsb) nsb.style.display = 'none';
+        }
+    }
+    const hb = document.getElementById('host-bank-line');
+    if (hb && gameState.bankStats) {
+        hb.textContent = 'بنك الأسئلة: استُخدم ' + gameState.bankStats.used + ' من ' + gameState.bankStats.total + (gameState.bankStats.version ? ' (إصدار ' + gameState.bankStats.version + ')' : '');
+    }
+    const hl = document.getElementById('hints-left');
+    if (hl) {
+        const me = playerInfo.name || '';
+        const used = (gameState.hintsUsed && me && gameState.hintsUsed[me]) || 0;
+        hl.textContent = String(Math.max(0, 3 - used));
+    }
+    const fs = document.getElementById('final-screen');
+    if (fs) {
+        if (gameState.winner && gameState.stageIndex >= 3 && gameState.phase === 'playing') {
+            fs.classList.add('show');
+            const ft = document.getElementById('final-title');
+            if (ft) ft.textContent = '🎉 مبروك! الفائز هو ' + (gameState.winner === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠');
+            const fsc = document.getElementById('final-score');
+            if (fsc) fsc.textContent = 'النتيجة النهائية — الأخضر: ' + gameState.scores.green + ' • البرتقالي: ' + gameState.scores.orange;
+        } else {
+            fs.classList.remove('show');
+        }
+    }
+    if (document.getElementById('room-lobby-screen').classList.contains('active')) renderRoomLobby();
+}
+
+const _origRenderUI = renderUI;
+renderUI = function () {
+    _origRenderUI();
+    renderExtraUI();
+};
+
+/* ---------- advanceStage (used by Edit B's win hook; host only) ---------- */
+function advanceStage() {
+    if (!isHost) return;
+    if (!gameState.stageWinner || gameState.stageIndex >= 3) return;
+    gameState.stageIndex++;
+    gameState.stageWinner = null;
+    gameState.winner = null;
+    generateNewGrid();
+    moveHistory = [];
+    renderUI();
+    broadcastState();
+}
+
+/* ===== Edit B (Phase 2): questions engine + stages + no-repeat ===== */
+/* Picker weights: word 25%, letter_quiz 20%, quiz 15%, riddle 8%, proverb 7%,
+   whoami 7%, synonyms 5%, truefalse 4%, saudi 4%, challenge 5%. */
+
+const PICK_WEIGHTS = [
+    ['word', 25], ['letter_quiz', 20], ['quiz', 15], ['riddle', 8],
+    ['proverb', 7], ['whoami', 7], ['synonyms', 5], ['truefalse', 4],
+    ['saudi', 4], ['challenge', 5]
+];
+
+function pickFromPool(key, pool) {
+    // Identity = array index (stable within one loaded bank version).
+    // Never repeats until the pool is exhausted, then reshuffles (new cycle).
+    if (!pool || !pool.length) return null;
+    let used = usedStore[key] || [];
+    let avail = [];
+    for (let i = 0; i < pool.length; i++) if (!used.includes(i)) avail.push(i);
+    if (!avail.length) {
+        usedStore[key] = [];
+        saveUsedStore();
+        avail = pool.map((_, i) => i);
+    }
+    const idx = avail[Math.floor(Math.random() * avail.length)];
+    usedStore[key] = (usedStore[key] || []).concat([idx]);
+    saveUsedStore();
+    updateBankStats();
+    return { item: pool[idx], idx };
+}
+
+function tryPickType(type, letter, stage) {
+    const S = (BANK && BANK.sections) || {};
+    const setQ = (qtext, atext, opts, hint, qtype) => {
+        gameState.questionText = qtext;
+        gameState.answerText = atext;
+        gameState.questionOptions = opts || null;
+        gameState.questionHint = hint || '';
+        gameState.questionType = qtype;
+    };
+    if (type === 'word') {
+        const pool = S.words && S.words[stage] && S.words[stage][letter];
+        const picked = pool && pool.length ? pickFromPool(usedKey('words', stage + ':' + letter), pool) : null;
+        if (!picked) return false;
+        const it = picked.item;
+        if (typeof it === 'string') {
+            setQ('اذكر كلمة تبدأ بحرف ' + letter + ' (مرحلة ' + STAGE_NAMES[stage] + ')', it, null, 'الكلمة من ' + it.length + ' أحرف', 'word');
+        } else {
+            setQ(it.q, it.a || it.answer || '-', null, '', 'word');
+        }
+        return true;
+    }
+    if (type === 'letter_quiz') {
+        const pool = S.letter_quiz && S.letter_quiz[letter];
+        const picked = pool && pool.length ? pickFromPool(usedKey('letter_quiz', letter), pool) : null;
+        if (!picked) return false;
+        const it = picked.item;
+        setQ(it.q, it.options[it.answer], it.options.slice(), '', 'letter_quiz');
+        return true;
+    }
+    if (type === 'riddle') {
+        const pool = S.riddles && S.riddles[stage];
+        const picked = pool && pool.length ? pickFromPool(usedKey('riddles', stage), pool) : null;
+        if (!picked) return false;
+        setQ(picked.item.q, picked.item.answer, null, picked.item.hint || '', 'riddle');
+        return true;
+    }
+    if (type === 'challenge') {
+        const pool = S.challenges && S.challenges[stage];
+        const picked = pool && pool.length ? pickFromPool(usedKey('challenges', stage), pool) : null;
+        if (!picked) return false;
+        const ex = picked.item.examples || [];
+        setQ(picked.item.q + ' ⏱️ (30 ثانية)', ex.join('، ') || '-', null, ex.length ? 'مثال: ' + ex[0] : '', 'challenge');
+        return true;
+    }
+    if (type === 'truefalse') {
+        const pool = S.truefalse && S.truefalse[stage];
+        const picked = pool && pool.length ? pickFromPool(usedKey('truefalse', stage), pool) : null;
+        if (!picked) return false;
+        setQ(picked.item.q, picked.item.answer ? 'صح ✅' : 'خطأ ❌', ['صح ✅', 'خطأ ❌'], '', 'truefalse');
+        return true;
+    }
+    // MCQ types: quiz, proverb, whoami, synonyms, saudi
+    const secMap = { quiz: 'quiz', proverb: 'proverbs', whoami: 'whoami', synonyms: 'synonyms', saudi: 'saudi' };
+    const sec = secMap[type];
+    if (!sec) return false;
+    const pool = S[sec] && S[sec][stage];
+    const picked = pool && pool.length ? pickFromPool(usedKey(sec, stage), pool) : null;
+    if (!picked) return false;
+    const it = picked.item;
+    const opts = it.options.slice();
+    const correct = opts[it.answer];
+    const wrong = opts.map((o, i) => i).filter(i => i !== it.answer);
+    const elim = wrong.length ? opts[wrong[Math.floor(Math.random() * wrong.length)]] : '';
+    setQ(it.q, correct, opts, elim ? '«' + elim + '» ليست الإجابة' : '', type);
+    return true;
+}
+
+function pickQuestionForLetter(letter) {
+    const stage = STAGE_KEYS[gameState.stageIndex] || 'easy';
+    const S = (BANK && BANK.sections) || {};
+    const hasFullBank = !!S.quiz;
+    let type = 'word';
+    if (hasFullBank) {
+        const roll = Math.random() * 100;
+        let acc = 0;
+        for (const [t, w] of PICK_WEIGHTS) {
+            acc += w;
+            if (roll < acc) { type = t; break; }
+        }
+    }
+    if (tryPickType(type, letter, stage)) return;
+    const fallbacks = ['word', 'letter_quiz', 'quiz', 'riddle', 'proverb', 'whoami', 'synonyms', 'truefalse', 'saudi', 'challenge'];
+    for (const fb of fallbacks) {
+        if (fb === type) continue;
+        if (tryPickType(fb, letter, stage)) return;
+    }
+    gameState.questionText = 'سؤال مفتوح بحرف ' + letter;
+    gameState.answerText = '-';
+    gameState.questionOptions = null;
+    gameState.questionHint = '';
+    gameState.questionType = 'word';
+}
+
+/* ---------- selectCell / loadQuestionForSelected / changeQuestion (overrides) ---------- */
+function selectCell(idx) {
+    if (!isHost || gameState.winner || gameState.stageWinner || !gameState.grid[idx]) return;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timerExpired = false;
+    gameState.selectedIdx = idx;
+    addEvent('اختير الحرف ' + gameState.grid[idx].letter);
+    pickQuestionForLetter(gameState.grid[idx].letter);
+    renderUI();
+    broadcastState();
+}
+
+function loadQuestionForSelected() {
+    if (gameState.selectedIdx === null || !gameState.grid[gameState.selectedIdx]) return;
+    pickQuestionForLetter(gameState.grid[gameState.selectedIdx].letter);
+}
+
+function changeQuestion() {
+    if (!isHost || gameState.selectedIdx === null || gameState.winner || gameState.stageWinner) return;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timeLeft = 0;
+    gameState.timerExpired = false;
+    addEvent('تم الانتقال إلى سؤال آخر');
+    loadQuestionForSelected();
+    renderUI();
+    broadcastState();
+}
+
+/* ---------- stage-aware win: a line ends the STAGE (not the game) until expert ---------- */
+function onLineComplete(team) {
+    if (gameState.stageIndex < 3) {
+        gameState.stageWinner = team;
+        gameState.winner = null;
+        gameState.lastMove = '🏆 أكمل الفريق ' + (team === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' خطاً في مرحلة ' + STAGE_NAMES[STAGE_KEYS[gameState.stageIndex]] + '!';
+        playCheerSound();
+    } else {
+        gameState.winner = team;
+        gameState.stageWinner = null;
+        playCheerSound();
+    }
+}
+
+function checkWinCondition() {
+    if (bfsCheck('green', (r, c) => r === 0, (r, c) => r === 4)) {
+        onLineComplete('green');
+        return;
+    }
+    if (bfsCheck('orange', (r, c) => c === 0, (r, c) => c === 4)) {
+        onLineComplete('orange');
+        return;
+    }
+    gameState.winner = null;
+    gameState.stageWinner = null;
+}
+
+/* Block colouring after a stage win (until the host advances the stage). */
+const _origColorSelectedCell = colorSelectedCell;
+colorSelectedCell = function (color) {
+    if (gameState.stageWinner) return;
+    _origColorSelectedCell(color);
+};
+
+/* Keep stage state consistent on board reset / undo. */
+const _origGenerateNewGrid = generateNewGrid;
+generateNewGrid = function () {
+    _origGenerateNewGrid();
+    gameState.questionOptions = null;
+    gameState.questionHint = '';
+    gameState.stageWinner = null;
+};
+
+const _origUndoLastMove = undoLastMove;
+undoLastMove = function () {
+    _origUndoLastMove();
+    gameState.stageWinner = null;
+    renderUI();
+    broadcastState();
+};
+
+/* ===== Edit C (Phase 3): TV view + disconnect pause + host takeover ===== */
+
+/* ---------- shared player-side STATE handler (also used on rejoin) ---------- */
+function handlePlayerData(data) {
+    if (!data) return;
+    if (data.type === 'ASSIGNED_INFO') {
+        playerInfo.name = data.name;
+        playerInfo.team = data.team;
+        updatePlayerBadge();
+        renderRoomLobby();
+    } else if (data.type === 'REACTION') {
+        showReaction(data.emoji, data.name);
+    } else if (data.type === 'STATE' && data.state && Array.isArray(data.state.grid) && data.state.grid.length === 25) {
+        const prevExpired = gameState.timerExpired;
+        const prevBuzzed = gameState.buzzedPlayer;
+        gameState = { ...gameState, ...data.state };
+        if (!prevBuzzed && gameState.buzzedPlayer) playBuzzSound();
+        if (!prevExpired && gameState.timerExpired) playTimeUpSound();
+        if (document.body.classList.contains('tv-mode')) { renderTv(); return; }
+        if (gameState.phase === 'playing') {
+            document.getElementById('room-lobby-screen').classList.remove('active');
+            document.getElementById('lobby-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('player-controls').style.display = 'block';
+        } else {
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('lobby-screen').classList.remove('active');
+            document.getElementById('room-lobby-screen').classList.add('active');
+        }
+        renderUI();
+    }
+}
+
+/* ---------- host takeover: deterministic election by roster order ---------- */
+let takeover = { active: false, timer: null, round: 0 };
+
+function maybeTakeover() {
+    if (takeover.active || gameState.solo || !currentRoomId()) return;
+    takeover.active = true;
+    takeover.round = 0;
+    const roster = (gameState.roster || []).filter(r => !r.isHost);
+    let rank = roster.findIndex(r => peer && r.peerId === peer.id);
+    if (rank < 0) rank = roster.length;
+    setConnectionStatus('انقطع الاتصال بالمقدم — جارٍ نقل الاستضافة…');
+    const st = document.getElementById('room-lobby-status');
+    if (st) st.textContent = 'انقطع الاتصال بالمقدم — جارٍ نقل الاستضافة…';
+    takeover.timer = setTimeout(() => takeoverStep(rank), rank * 4000);
+}
+
+function takeoverStep(rank) {
+    if (!takeover.active) return;
+    if (rank === 0) {
+        claimRoom(currentRoomId(), () => {
+            // Someone else claimed it first: fall back to rejoining as player.
+            takeover.timer = setTimeout(() => takeoverStep(1), 2000);
+        });
+        return;
+    }
+    rejoinAsPlayer(currentRoomId(), (ok) => {
+        if (ok) { takeover.active = false; return; }
+        takeover.round++;
+        if (takeover.round >= 3) {
+            setConnectionStatus('تعذّر استعادة الاتصال بالغرفة.');
+            const st = document.getElementById('room-lobby-status');
+            if (st) st.textContent = 'تعذّر استعادة الاتصال بالغرفة — أعد تحميل الصفحة وحاول الانضمام من جديد.';
+            takeover.active = false;
+            return;
+        }
+        claimRoom(currentRoomId(), () => {
+            takeover.timer = setTimeout(() => takeoverStep(rank), 2500);
+        });
+    });
+}
+
+function rejoinAsPlayer(roomId, cb) {
+    if (!peer || peer.destroyed) { cb(false); return; }
+    let done = false;
+    const finish = (ok) => { if (!done) { done = true; cb(ok); } };
+    let conn;
+    try { conn = peer.connect(roomId); } catch (e) { finish(false); return; }
+    const to = setTimeout(() => { try { conn.close(); } catch (e) {} finish(false); }, 8000);
+    conn.on('open', () => {
+        clearTimeout(to);
+        hostConn = conn;
+        joinInitializing = false;
+        setConnectionStatus('متصل بالمقدم الجديد');
+        conn.on('data', handlePlayerData);
+        conn.on('close', () => {
+            joinInitializing = false;
+            setConnectionStatus('انقطع الاتصال بالمقدم');
+            const b = document.getElementById('conn-banner');
+            if (b) { b.style.display = 'block'; b.textContent = '⚠️ انقطع الاتصال بالمقدم'; }
+            const bb = document.getElementById('buzzer-btn');
+            if (bb) bb.disabled = true;
+            maybeTakeover();
+        });
+        conn.send({ type: 'JOIN', name: playerInfo.name || '', team: playerInfo.team || 'green' });
+        finish(true);
+    });
+    conn.on('error', () => { clearTimeout(to); finish(false); });
+    conn.on('close', () => { if (!done) { clearTimeout(to); finish(false); } });
+}
+
+function claimRoom(roomId, onFail) {
+    if (typeof Peer === 'undefined') { if (onFail) onFail(); return; }
+    let settled = false;
+    const cp = new Peer(roomId);
+    const to = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { cp.destroy(); } catch (e) {}
+        if (onFail) onFail();
+    }, CONN_HOST_TIMEOUT_MS);
+    cp.on('open', (id) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(to);
+        takeover.active = false;
+        if (takeover.timer) { clearTimeout(takeover.timer); takeover.timer = null; }
+        try { if (peer && !peer.destroyed && peer !== cp) peer.destroy(); } catch (e) {}
+        peer = cp;
+        hostConn = null;
+        connections = [];
+        isHost = true;
+        hostInitializing = false;
+        roomCodeFull = id;
+        gameState.roomCodeShort = id.replace(/^huroof-/, '');
+        gameState.roster = (gameState.roster || []).filter(r => !r.isHost);
+        const me = gameState.roster.find(r => r.name === (playerInfo.name || ''));
+        if (me) { me.isHost = true; me.peerId = 'host'; me.ready = true; }
+        else {
+            gameState.roster.push({ name: playerInfo.name || 'المقدم', team: playerInfo.team || 'green', ready: true, isHost: true, peerId: 'host' });
+        }
+        myReady = true;
+        gameState.paused = null;
+        setConnectionStatus('أنت المقدم الجديد • الغرفة مستمرة');
+        const rls = document.getElementById('room-lobby-status');
+        if (rls) rls.textContent = 'أنت المقدم الجديد • الغرفة مستمرة';
+        const dr = document.getElementById('display-room-code');
+        if (dr) dr.textContent = gameState.roomCodeShort;
+        if (gameState.phase === 'playing') {
+            document.getElementById('room-lobby-screen').classList.remove('active');
+            document.getElementById('lobby-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+            document.getElementById('host-info-bar').style.display = 'block';
+            document.getElementById('host-controls').style.display = 'block';
+            document.getElementById('player-controls').style.display = 'block';
+        } else {
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('lobby-screen').classList.remove('active');
+            document.getElementById('room-lobby-screen').classList.add('active');
+            showRoomLobby();
+        }
+        gameState.lastMove = '🔄 تولّى ' + (playerInfo.name || 'لاعب') + ' الاستضافة — اللعبة مستمرة';
+        renderUI();
+        broadcastState();
+    });
+    cp.on('connection', (conn) => onHostConnection(conn));
+    cp.on('error', (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(to);
+        try { cp.destroy(); } catch (e) {}
+        if (onFail) onFail();
+    });
+}
+
+function onHostConnection(conn) {
+    if (!connections.includes(conn)) connections.push(conn);
+    conn.on('error', () => { setConnectionStatus('يوجد خلل باتصال أحد اللاعبين'); });
+    conn.on('data', (data) => handleHostReceive(conn, data));
+    conn.on('close', () => {
+        const wasPlayer = conn.playerName;
+        connections = connections.filter(c => c !== conn);
+        if (wasPlayer) {
+            gameState.roster = (gameState.roster || []).filter(r => r.peerId !== conn.peer);
+            if (gameState.phase === 'playing') {
+                gameState.paused = { name: wasPlayer };
+                renderUI();
+                broadcastState();
+            } else {
+                renderRoomLobby();
+                updateConnectedPlayersList();
+                broadcastState();
+            }
+        } else {
+            updateConnectedPlayersList();
+            broadcastState();
+        }
+    });
+}
+
+/* ---------- TV view: read-only, zero buttons/inputs, live STATE updates ---------- */
+let tvTimer = null;
+
+function startTvView(roomCode) {
+    document.body.classList.add('tv-mode');
+    const roomId = normalizeRoomCode(roomCode);
+    gameState.roomCodeShort = roomId.replace(/^huroof-/, '');
+    let tv = document.getElementById('tv-screen');
+    if (!tv) {
+        tv = document.createElement('div');
+        tv.id = 'tv-screen';
+        tv.className = 'screen';
+        tv.innerHTML = '<h1>🎮 لعبة الحروف</h1>'
+            + '<div class="tv-room" id="tv-room-code">الغرفة: ' + gameState.roomCodeShort + '</div>'
+            + '<div class="tv-scores"><span class="tv-score-green">🟢 الأخضر: <b id="tv-score-green">0</b></span>'
+            + '<span class="tv-score-orange">🟠 البرتقالي: <b id="tv-score-orange">0</b></span></div>'
+            + '<div id="tv-turn" class="tv-turn">بانتظار بدء اللعبة…</div>'
+            + '<div id="tv-grid"></div>'
+            + '<div id="tv-question" class="tv-question">—</div>'
+            + '<div id="tv-options" class="tv-options"></div>'
+            + '<div id="tv-lastmove" class="tv-lastmove">—</div>'
+            + '<div id="tv-winner" class="tv-winner" style="display:none;"></div>'
+            + '<div id="tv-status" class="tv-status">جارٍ الاتصال بالغرفة…</div>';
+        document.body.appendChild(tv);
+        const rf = document.getElementById('reactions-float');
+        if (rf) tv.appendChild(rf);
+    }
+    document.getElementById('lobby-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('room-lobby-screen').classList.remove('active');
+    tv.classList.add('active');
+    tvConnect(roomId);
+}
+
+function tvStatus(msg) {
+    const el = document.getElementById('tv-status');
+    if (el) el.textContent = msg;
+}
+
+function tvConnect(roomId) {
+    if (typeof Peer === 'undefined') { tvStatus('تعذّر تحميل مكتبة الاتصال (PeerJS).'); return; }
+    const p = new Peer();
+    peer = p;
+    let settled = false;
+    const schedule = (ms) => { if (tvTimer) clearTimeout(tvTimer); tvTimer = setTimeout(() => tvConnect(roomId), ms); };
+    const to = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { p.destroy(); } catch (e) {}
+        tvStatus('تعذّر الاتصال — إعادة المحاولة…');
+        schedule(3000);
+    }, CONN_JOIN_TIMEOUT_MS);
+    p.on('open', () => {
+        const conn = p.connect(roomId);
+        hostConn = conn;
+        conn.on('open', () => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(to);
+            tvStatus('متصل • الغرفة ' + roomId.replace(/^huroof-/, ''));
+        });
+        conn.on('data', (data) => {
+            if (data.type === 'STATE' && data.state && Array.isArray(data.state.grid) && data.state.grid.length === 25) {
+                gameState = { ...gameState, ...data.state };
+                renderTv();
+            } else if (data.type === 'REACTION') {
+                showReaction(data.emoji, data.name);
+            }
+        });
+        conn.on('error', () => {
+            if (!settled) { settled = true; clearTimeout(to); tvStatus('تعذّر الاتصال — إعادة المحاولة…'); schedule(3000); }
+        });
+        conn.on('close', () => {
+            tvStatus('انقطع الاتصال — إعادة المحاولة…');
+            try { p.destroy(); } catch (e) {}
+            schedule(3000);
+        });
+    });
+    p.on('error', () => {
+        if (!settled) { settled = true; clearTimeout(to); tvStatus('تعذّر الاتصال — إعادة المحاولة…'); schedule(3000); }
+    });
+}
+
+function renderTv() {
+    const tv = document.getElementById('tv-screen');
+    if (!tv) return;
+    const sg = document.getElementById('tv-score-green');
+    if (sg) sg.textContent = gameState.scores.green;
+    const so = document.getElementById('tv-score-orange');
+    if (so) so.textContent = gameState.scores.orange;
+    const turnEl = document.getElementById('tv-turn');
+    if (turnEl) {
+        turnEl.textContent = gameState.phase === 'playing'
+            ? ('دور: ' + turnPlayerName(gameState.turn) + (gameState.turn === 'green' ? ' 🟢' : ' 🟠'))
+            : 'بانتظار بدء اللعبة…';
+    }
+    const qEl = document.getElementById('tv-question');
+    if (qEl) qEl.textContent = gameState.questionText || '—';
+    const opts = document.getElementById('tv-options');
+    if (opts) {
+        opts.innerHTML = '';
+        (gameState.questionOptions || []).forEach(o => {
+            const d = document.createElement('div');
+            d.className = 'tv-opt';
+            d.textContent = o;
+            opts.appendChild(d);
+        });
+    }
+    const lm = document.getElementById('tv-lastmove');
+    if (lm) lm.textContent = gameState.lastMove || '—';
+    const grid = document.getElementById('tv-grid');
+    if (grid && Array.isArray(gameState.grid) && gameState.grid.length === 25) {
+        grid.innerHTML = '';
+        for (let r = 0; r < 5; r++) {
+            const row = document.createElement('div');
+            row.className = 'hex-row' + (r % 2 === 1 ? ' odd' : '');
+            for (let c = 0; c < 5; c++) {
+                const idx = r * 5 + c;
+                const cell = gameState.grid[idx];
+                const d = document.createElement('div');
+                d.className = 'hex-cell ' + (cell ? cell.owner : 'neutral') + (gameState.selectedIdx === idx ? ' selected' : '');
+                d.textContent = cell ? cell.letter : '';
+                row.appendChild(d);
+            }
+            grid.appendChild(row);
+        }
+    }
+    const w = document.getElementById('tv-winner');
+    if (w) {
+        if (gameState.winner) {
+            w.style.display = 'block';
+            w.textContent = '🎉 الفائز: ' + (gameState.winner === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠');
+        } else if (gameState.stageWinner) {
+            w.style.display = 'block';
+            w.textContent = '🏆 اكتملت المرحلة — الفريق ' + (gameState.stageWinner === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠');
+        } else {
+            w.style.display = 'none';
+        }
+    }
+}
+
+/* ===== Edit D (Phase 4): turn timer + turn rotation + polish ===== */
+/* The old 10s buzzer timer is now the configurable TURN timer:
+   - Line 594: MAX_TIMER_SECONDS 10 -> 60 (let, so the timer can set it to 30/60).
+   - startTurnTimer() uses gameState.turnSeconds from the lobby (30/60/none, default 60).
+   - The timer starts when the host picks a cell; on expiry the turn auto-passes.
+   - The buzzer no longer restarts the timer (startHostTimer is a guarded alias). */
+
+function startTurnTimer() {
+    stopHostTimer();
+    if (!gameState.turnSeconds || gameState.turnSeconds <= 0) return; // timer: none
+    MAX_TIMER_SECONDS = gameState.turnSeconds;
+    gameState.timeLeft = gameState.turnSeconds;
+    gameState.timerExpired = false;
+    renderUI();
+    broadcastState();
+    timerInterval = setInterval(() => {
+        if (gameState.timeLeft > 1) {
+            gameState.timeLeft--;
+            if (gameState.timeLeft <= 3) playTickSound(600, 0.1);
+            renderUI();
+            broadcastState();
+        } else {
+            gameState.timeLeft = 0;
+            gameState.timerExpired = true;
+            stopHostTimer();
+            playTimeUpSound();
+            doPassTurn();
+            gameState.lastMove = '⏰ انتهى وقت الدور — تم التمرير تلقائياً';
+            renderUI();
+            broadcastState();
+        }
+    }, 1000);
+}
+
+const _origStartHostTimer = startHostTimer;
+startHostTimer = function () {
+    // Buzzer must not restart an active turn timer.
+    if (timerInterval) return;
+    startTurnTimer();
+};
+
+/* Start the turn timer when the host picks a cell. */
+const _bSelectCell = selectCell;
+selectCell = function (idx) {
+    _bSelectCell(idx);
+    if (gameState.selectedIdx === idx && isHost && !gameState.winner && !gameState.stageWinner) {
+        startTurnTimer();
+    }
+};
+
+/* Rotate the turn after a cell is coloured (+10), with a soft pop sound. */
+const _cColorSelectedCell = colorSelectedCell;
+colorSelectedCell = function (color) {
+    if (gameState.selectedIdx === null || gameState.selectedIdx === undefined) return;
+    const idx = gameState.selectedIdx;
+    const before = gameState.grid[idx] ? gameState.grid[idx].owner : null;
+    _cColorSelectedCell(color);
+    const after = gameState.grid[idx] ? gameState.grid[idx].owner : null;
+    if (after !== before) {
+        playPopSound();
+        if ((after === 'green' || after === 'orange') && !gameState.winner && !gameState.stageWinner) {
+            gameState.turn = gameState.turn === 'green' ? 'orange' : 'green';
+            gameState.lastMove = '✅ ' + (after === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠') + ' أخذ الحرف — الدور الآن للفريق ' + (gameState.turn === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠');
+            renderUI();
+            broadcastState();
+        }
+    }
+};
+
+/* Show the turn timer during an active turn even before anyone buzzes. */
+function renderTurnTimerUI() {
+    const timerBox = document.getElementById('timer-box');
+    const timerDigits = document.getElementById('timer-digits');
+    const timerBar = document.getElementById('timer-bar');
+    if (!timerBox || !timerDigits || !timerBar) return;
+    if (!gameState.buzzedPlayer && gameState.selectedIdx !== null && gameState.timeLeft > 0 && !gameState.winner) {
+        timerBox.style.display = 'block';
+        timerDigits.textContent = gameState.timeLeft + ' ثوانٍ';
+        timerDigits.classList.toggle('urgent', gameState.timeLeft <= 3);
+        const pct = (gameState.timeLeft / (gameState.turnSeconds || MAX_TIMER_SECONDS || 60)) * 100;
+        timerBar.style.width = pct + '%';
+        timerBar.style.backgroundColor = gameState.timeLeft <= 3 ? '#ef4444' : '#38bdf8';
+    }
+}
+
+const _renderUI3 = renderUI;
+renderUI = function () {
+    _renderUI3();
+    renderTurnTimerUI();
+};
 </script>
 </body>
 </html>
