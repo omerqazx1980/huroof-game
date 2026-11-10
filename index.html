@@ -67,6 +67,7 @@
         .hex-cell.selected { outline: 4px solid #38bdf8; transform: scale(1.08); z-index: 5; background: #bae6fd; }
         .hex-cell.green { background: var(--green); color: white; }
         .hex-cell.orange { background: var(--orange); color: white; }
+        .hex-cell.winning-cell { filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.95)) drop-shadow(0 0 3px #fde68a); transform: scale(1.06); z-index: 6; }
 
         .panel { background: #0f172a; padding: 15px; border-radius: 12px; margin-top: 15px; border: 1px solid #334155; }
         .buzzer-btn { width: 100%; height: 130px; font-size: 2rem; border-radius: 16px; background: #dc2626; box-shadow: 0 6px 0 #991b1b; margin-top: 12px; touch-action: manipulation; }
@@ -207,6 +208,11 @@
                         </select>
                     </div>
                 </div>
+                <label class="field-label">التقدم:</label>
+                <select id="progression-select" class="select-field">
+                    <option value="stages">مراحل متدرجة (سهل ← خبير)</option>
+                    <option value="single">جولة واحدة فاصلة</option>
+                </select>
                 <label class="check-row"><input type="checkbox" id="host-play-check" onchange="document.getElementById('host-team-row').style.display=this.checked?'flex':'none'"> العب معهم (المقدم يلعب أيضاً)</label>
                 <div id="host-team-row" class="lobby-row" style="display:none;">
                     <div>
@@ -275,6 +281,7 @@
                 <button id="ready-btn" class="btn btn-green" style="flex: 1; padding: 16px; font-size: 1.1rem;" onclick="toggleReady()">أنا جاهز ✅</button>
             </div>
             <button id="start-game-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 16px; font-size: 1.15rem; display: none;" onclick="startGame()">ابدأ اللعب ▶️</button>
+            <button id="force-start-btn" class="btn btn-gray" style="width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem; display: none;" onclick="startGame(true)">بدء فوري (تجاوز انتظار اللاعبين) ⚡</button>
             <p id="lobby-start-hint" style="color: #fbbf24; margin-top: 8px;"></p>
             <button class="btn btn-gray" style="margin-top: 14px;" onclick="leaveRoom()">مغادرة الغرفة 🚪</button>
             <p id="room-lobby-status" style="margin-top: 10px; color: #94a3b8;"></p>
@@ -368,8 +375,13 @@
                 <button class="btn btn-primary" onclick="changeQuestion()">سؤال آخر 🔄</button>
                 <button class="btn btn-danger" onclick="unlockBuzzer()">تصفير الجرس</button>
                 <button class="btn btn-primary" onclick="passTurn()">تمرير الدور ⏭️</button>
+                <button class="btn btn-gray" id="undo-btn" onclick="undoLastMove()">تراجع ↩️</button>
                 <button class="btn btn-gray" id="next-stage-btn" style="display:none;" onclick="advanceStage()">المرحلة التالية ⏭️</button>
                 <button class="icon-btn mute-btn" onclick="toggleMute()">🔊</button>
+            </div>
+            <div id="history-panel" style="display: none; margin-top: 12px; background: #1e293b; padding: 10px; border-radius: 8px;">
+                <div style="font-weight: bold; margin-bottom: 6px;">📜 سجل الجولة</div>
+                <ul id="history-list" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: #cbd5e1;"></ul>
             </div>
         </div>
 
@@ -666,7 +678,7 @@ function renderUI() {
             const idx = r * 5 + c;
             const cell = gameState.grid[idx];
             const cellEl = document.createElement('div');
-            cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '');
+            cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '');
             cellEl.textContent = cell.letter;
             cellEl.setAttribute('role', 'button');
             cellEl.setAttribute('tabindex', isHost ? '0' : '-1');
@@ -1186,6 +1198,46 @@ function bfsCheck(team, isStart, isEnd) {
     return false;
 }
 
+/* ---------- findWinningPath: BFS that returns the winning cell indices ----------
+   Fix 6: bfsCheck only returns true/false. This mirrors its search (same start
+   and end borders, same hex neighbours) but tracks parents and returns the
+   shortest connected path as an array of grid indices, so the winning line
+   can be highlighted. Returns [] when there is no line. */
+function findWinningPath(team) {
+    const isStart = team === 'green' ? (r, c) => r === 0 : (r, c) => c === 0;
+    const isEnd = team === 'green' ? (r, c) => r === 4 : (r, c) => c === 4;
+    const parent = new Map();
+    const queue = [];
+    for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+            const idx = r * 5 + c;
+            if (isStart(r, c) && gameState.grid[idx].owner === team) {
+                queue.push([r, c]);
+                parent.set(idx, -1);
+            }
+        }
+    }
+    let head = 0;
+    while (head < queue.length) {
+        const [r, c] = queue[head++];
+        const idx = r * 5 + c;
+        if (isEnd(r, c)) {
+            const path = [];
+            let cur = idx;
+            while (cur !== -1) { path.push(cur); cur = parent.get(cur); }
+            return path.reverse();
+        }
+        for (const [nr, nc] of getHexNeighbors(r, c)) {
+            const nIdx = nr * 5 + nc;
+            if (!parent.has(nIdx) && gameState.grid[nIdx].owner === team) {
+                parent.set(nIdx, idx);
+                queue.push([nr, nc]);
+            }
+        }
+    }
+    return [];
+}
+
 function triggerConfetti() {
     try {
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
@@ -1238,9 +1290,9 @@ Object.assign(gameState, {
     phase: 'lobby', stageIndex: 0, turn: 'green', turnSeconds: 60,
     paused: null, lastMove: '', questionOptions: null, questionType: '',
     questionHint: '', hintsUsed: {}, roster: [],
-    settings: { mode: '1v1', stage: 'easy', timer: 60, hostPlay: false, hostTeam: 'green' },
+    settings: { mode: '1v1', stage: 'easy', timer: 60, hostPlay: false, hostTeam: 'green', progression: 'stages' },
     bankStats: { used: 0, total: 0, version: '' },
-    stageWinner: null, solo: false, roomCodeShort: ''
+    stageWinner: null, solo: false, roomCodeShort: '', winningPath: []
 });
 
 const CONN_MAX_ATTEMPTS = 3;
@@ -1303,6 +1355,7 @@ function initHost() {
     gameState.settings = {
         mode: (document.getElementById('mode-select') || {}).value || '1v1',
         stage: (document.getElementById('stage-select') || {}).value || 'easy',
+        progression: (document.getElementById('progression-select') || {}).value || 'stages',
         timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
         hostPlay: !!((document.getElementById('host-play-check') || {}).checked),
         hostTeam: (document.getElementById('host-team-select') || {}).value || 'green'
@@ -1567,6 +1620,7 @@ function broadcastState() {
         timerExpired: gameState.timerExpired,
         winner: gameState.winner,
         stageWinner: gameState.stageWinner || null,
+        winningPath: gameState.winningPath || [],
         stageIndex: gameState.stageIndex || 0,
         turn: gameState.turn || 'green',
         turnSeconds: gameState.turnSeconds || 60,
@@ -1751,10 +1805,12 @@ function renderRoomLobby() {
     const sum = document.getElementById('lobby-settings-summary');
     if (sum) {
         const s = gameState.settings || {};
-        sum.textContent = 'الوضع: ' + (s.mode === '2v2' ? '4 لاعبين (2 ضد 2)' : 'لاعبان (1 ضد 1)') + ' • المرحلة: ' + (STAGE_NAMES[s.stage] || 'سهل') + ' • المؤقّت: ' + (s.timer === 0 ? 'بدون مؤقّت' : (s.timer || 60) + ' ثانية');
+        sum.textContent = 'الوضع: ' + (s.mode === '2v2' ? '4 لاعبين (2 ضد 2)' : 'لاعبان (1 ضد 1)') + ' • المرحلة: ' + (STAGE_NAMES[s.stage] || 'سهل') + ' • المؤقّت: ' + (s.timer === 0 ? 'بدون مؤقّت' : (s.timer || 60) + ' ثانية') + ' • التقدم: ' + (s.progression === 'single' ? 'جولة واحدة' : 'مراحل متدرجة');
     }
     const startBtn = document.getElementById('start-game-btn');
     if (startBtn) startBtn.style.display = isHost ? 'block' : 'none';
+    const forceBtn = document.getElementById('force-start-btn');
+    if (forceBtn) forceBtn.style.display = isHost ? 'block' : 'none';
     const readyBtn = document.getElementById('ready-btn');
     if (readyBtn) {
         readyBtn.textContent = myReady ? 'جاهز ✅ (اضغط للإلغاء)' : 'أنا جاهز ✅';
@@ -1786,15 +1842,17 @@ function toggleReady() {
     }
 }
 
-function startGame() {
+function startGame(force) {
     if (!isHost) return;
     const roster = gameState.roster || [];
     const need = (gameState.settings && gameState.settings.mode === '2v2') ? 4 : 2;
-    if (roster.length < need) {
+    // Fix 3: force = start immediately, skipping the roster-count and ready
+    // checks (local single-screen play). Normal startGame() is unchanged.
+    if (!force && roster.length < need) {
         document.getElementById('lobby-start-hint').textContent = 'يلزم ' + need + ' لاعبين للبدء (الحالي: ' + roster.length + ')';
         return;
     }
-    if (!roster.every(p => p.ready)) {
+    if (!force && !roster.every(p => p.ready)) {
         document.getElementById('lobby-start-hint').textContent = 'بانتظار جاهزية جميع اللاعبين…';
         return;
     }
@@ -1873,6 +1931,7 @@ function startSinglePlayer() {
     gameState.settings = {
         mode: '1v1',
         stage: (document.getElementById('stage-select') || {}).value || 'easy',
+        progression: (document.getElementById('progression-select') || {}).value || 'stages',
         timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
         hostPlay: true,
         hostTeam: 'green'
@@ -2359,7 +2418,7 @@ function updateMuteButtons() {
 const _playBuzzSound = playBuzzSound;
 playBuzzSound = function () { if (soundOn) _playBuzzSound(); };
 const _playTickSound = playTickSound;
-playTickSound = function () { if (soundOn) _playTickSound(); };
+playTickSound = function (...args) { if (soundOn) _playTickSound(...args); };
 const _playTimeUpSound = playTimeUpSound;
 playTimeUpSound = function () { if (soundOn) _playTimeUpSound(); };
 
@@ -2507,7 +2566,7 @@ function renderExtraUI() {
     }
     const fs = document.getElementById('final-screen');
     if (fs) {
-        if (gameState.winner && gameState.stageIndex >= 3 && gameState.phase === 'playing') {
+        if (gameState.winner && (gameState.stageIndex >= 3 || (gameState.settings && gameState.settings.progression === 'single')) && gameState.phase === 'playing') {
             fs.classList.add('show');
             const ft = document.getElementById('final-title');
             if (ft) ft.textContent = '🎉 مبروك! الفائز هو ' + (gameState.winner === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠');
@@ -2717,16 +2776,21 @@ function changeQuestion() {
     broadcastState();
 }
 
-/* ---------- stage-aware win: a line ends the STAGE (not the game) until expert ---------- */
+/* ---------- stage-aware win: a line ends the STAGE (not the game) until expert ----------
+   Fix 4: progression 'single' = one decisive round — a completed line ends the
+   GAME at any stage. Default 'stages' keeps the old behaviour. */
 function onLineComplete(team) {
-    if (gameState.stageIndex < 3) {
+    // Fix 6: record the winning cells so the line can be highlighted.
+    gameState.winningPath = findWinningPath(team) || [];
+    if ((gameState.settings && gameState.settings.progression === 'single') || gameState.stageIndex >= 3) {
+        gameState.winner = team;
+        gameState.stageWinner = null;
+        gameState.lastMove = '🏆 أكمل الفريق ' + (team === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' خطاً — فاز بالمسابقة!';
+        playCheerSound();
+    } else {
         gameState.stageWinner = team;
         gameState.winner = null;
         gameState.lastMove = '🏆 أكمل الفريق ' + (team === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' خطاً في مرحلة ' + STAGE_NAMES[STAGE_KEYS[gameState.stageIndex]] + '!';
-        playCheerSound();
-    } else {
-        gameState.winner = team;
-        gameState.stageWinner = null;
         playCheerSound();
     }
 }
@@ -2742,6 +2806,7 @@ function checkWinCondition() {
     }
     gameState.winner = null;
     gameState.stageWinner = null;
+    gameState.winningPath = [];
 }
 
 /* Block colouring after a stage win (until the host advances the stage). */
@@ -2758,12 +2823,14 @@ generateNewGrid = function () {
     gameState.questionOptions = null;
     gameState.questionHint = '';
     gameState.stageWinner = null;
+    gameState.winningPath = [];
 };
 
 const _origUndoLastMove = undoLastMove;
 undoLastMove = function () {
     _origUndoLastMove();
     gameState.stageWinner = null;
+    gameState.winningPath = [];
     renderUI();
     broadcastState();
 };
@@ -3080,7 +3147,7 @@ function renderTv() {
                 const idx = r * 5 + c;
                 const cell = gameState.grid[idx];
                 const d = document.createElement('div');
-                d.className = 'hex-cell ' + (cell ? cell.owner : 'neutral') + (gameState.selectedIdx === idx ? ' selected' : '');
+                d.className = 'hex-cell ' + (cell ? cell.owner : 'neutral') + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '');
                 d.textContent = cell ? cell.letter : '';
                 row.appendChild(d);
             }
@@ -3106,7 +3173,8 @@ function renderTv() {
    - Line 594: MAX_TIMER_SECONDS 10 -> 60 (let, so the timer can set it to 30/60).
    - startTurnTimer() uses gameState.turnSeconds from the lobby (30/60/none, default 60).
    - The timer starts when the host picks a cell; on expiry the turn auto-passes.
-   - The buzzer no longer restarts the timer (startHostTimer is a guarded alias). */
+   - Fix 5: the buzzer opens a 10s quick-answer window (startHostTimer stops the
+     turn timer and counts down from 10); the turn timer restarts on the next pick. */
 
 function startTurnTimer() {
     stopHostTimer();
@@ -3137,9 +3205,33 @@ function startTurnTimer() {
 
 const _origStartHostTimer = startHostTimer;
 startHostTimer = function () {
-    // Buzzer must not restart an active turn timer.
-    if (timerInterval) return;
-    startTurnTimer();
+    // Fix 5: a buzz opens a 10s quick-answer window. Stop any running turn
+    // timer and count down from 10 (tick sounds at <=3s, timerExpired at 0 —
+    // same end behaviour as the original buzz timer). The lobby turn-timer
+    // setting (30/60/none) still governs the turn itself; the next cell pick
+    // starts a fresh turn timer. With timer 'none' the buzz window is still
+    // 10s, so the game cannot stall after a buzz.
+    stopHostTimer();
+    MAX_TIMER_SECONDS = 10;
+    gameState.timeLeft = 10;
+    gameState.timerExpired = false;
+    renderUI();
+    broadcastState();
+    timerInterval = setInterval(() => {
+        if (gameState.timeLeft > 1) {
+            gameState.timeLeft--;
+            if (gameState.timeLeft <= 3) playTickSound(600, 0.1);
+            renderUI();
+            broadcastState();
+        } else {
+            gameState.timeLeft = 0;
+            gameState.timerExpired = true;
+            stopHostTimer();
+            playTimeUpSound();
+            renderUI();
+            broadcastState();
+        }
+    }, 1000);
 };
 
 /* Start the turn timer when the host picks a cell. */
