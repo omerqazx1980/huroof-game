@@ -374,10 +374,18 @@
                 <button class="btn btn-gray" onclick="colorSelectedCell('neutral')">إعادة للأصفر</button>
                 <button class="btn btn-primary" onclick="changeQuestion()">سؤال آخر 🔄</button>
                 <button class="btn btn-danger" onclick="unlockBuzzer()">تصفير الجرس</button>
+                <button class="btn btn-primary" id="open-buzzer-btn" style="display: none;" onclick="openBuzzer()">فتح الجرس 🔓</button>
                 <button class="btn btn-primary" onclick="passTurn()">تمرير الدور ⏭️</button>
                 <button class="btn btn-gray" id="undo-btn" onclick="undoLastMove()">تراجع ↩️</button>
                 <button class="btn btn-gray" id="next-stage-btn" style="display:none;" onclick="advanceStage()">المرحلة التالية ⏭️</button>
                 <button class="icon-btn mute-btn" onclick="toggleMute()">🔊</button>
+            </div>
+            <div class="flex-row" style="margin-top: 10px;">
+                <span style="align-self: center; font-size: 0.95rem;">النقاط اليدوية:</span>
+                <button class="btn btn-green" onclick="adjustScore('green', 5)">🟢 +5</button>
+                <button class="btn btn-gray" onclick="adjustScore('green', -5)">🟢 -5</button>
+                <button class="btn btn-orange" onclick="adjustScore('orange', 5)">🟠 +5</button>
+                <button class="btn btn-gray" onclick="adjustScore('orange', -5)">🟠 -5</button>
             </div>
             <div id="history-panel" style="display: none; margin-top: 12px; background: #1e293b; padding: 10px; border-radius: 8px;">
                 <div style="font-weight: bold; margin-bottom: 6px;">📜 سجل الجولة</div>
@@ -617,6 +625,7 @@ let gameState = {
     answerText: "-",
     qIndex: 0,
     buzzedPlayer: null,
+    buzzerLocked: true,
     timeLeft: 0,
     timerExpired: false,
     winner: null,
@@ -647,6 +656,7 @@ function generateNewGrid() {
     gameState.questionText = "اختر حرفاً من الشبكة لبدء السؤال";
     gameState.answerText = "-";
     gameState.buzzedPlayer = null;
+    gameState.buzzerLocked = true;
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
     gameState.winner = null;
@@ -665,6 +675,50 @@ function getQuestionsForLetter(letter, level) {
         ];
     }
     return letterObj[level] || letterObj["15-20"];
+}
+
+/* ---------- Score counter animation (2026-11-11) ----------
+   Displayed scores step toward the target instead of jumping (10 -> 11 -> 12 ...
+   -> 20 over ~500ms) with a light tick per step. renderUI/renderTv run on
+   every timer tick and broadcast, so the animation must NOT restart per render:
+   - displayedScores holds what is currently shown per team.
+   - animateScore() only starts an interval when the target differs and no
+     interval is running for that team; the interval reads the LIVE target
+     from gameState.scores each tick, so a mid-animation change just retargets.
+   - The final displayed value always lands exactly on gameState.scores[team].
+   - Display-only: win checks, broadcasts and the timer never wait for it.
+   - The final screen / stage banner keep reading gameState.scores directly. */
+const displayedScores = { green: 0, orange: 0 };
+const scoreAnimTimers = { green: null, orange: null };
+/* Manual score adjustments (Feature 2) are tracked separately from board moves
+   so the undo button never reverts them: each moveHistory entry records the
+   manual delta at the time it was pushed, and undo re-applies only the
+   adjustments made after that snapshot. */
+const manualScoreDelta = { green: 0, orange: 0 };
+function setScoreText(team, value) {
+    const el = document.getElementById(team === 'green' ? 'score-green' : 'score-orange');
+    if (el) el.textContent = String(value);
+    const tvEl = document.getElementById(team === 'green' ? 'tv-score-green' : 'tv-score-orange');
+    if (tvEl) tvEl.textContent = String(value);
+}
+function animateScore(team) {
+    const target = (gameState.scores && gameState.scores[team]) || 0;
+    setScoreText(team, displayedScores[team]);
+    if (displayedScores[team] === target) {
+        if (scoreAnimTimers[team]) { clearInterval(scoreAnimTimers[team]); scoreAnimTimers[team] = null; }
+        return;
+    }
+    if (scoreAnimTimers[team]) return; // already animating; interval reads the live target
+    scoreAnimTimers[team] = setInterval(() => {
+        const t = (gameState.scores && gameState.scores[team]) || 0;
+        let v = displayedScores[team];
+        if (v === t) { clearInterval(scoreAnimTimers[team]); scoreAnimTimers[team] = null; setScoreText(team, t); return; }
+        const step = Math.max(1, Math.ceil(Math.abs(t - v) / 10));
+        v += t > v ? Math.min(step, t - v) : -Math.min(step, v - t);
+        displayedScores[team] = v;
+        setScoreText(team, v);
+        playTickSound(880, 0.04);
+    }, 50);
 }
 
 function renderUI() {
@@ -692,8 +746,8 @@ function renderUI() {
         gridEl.appendChild(rowEl);
     }
 
-    document.getElementById('score-green').textContent = gameState.scores.green;
-    document.getElementById('score-orange').textContent = gameState.scores.orange;
+    animateScore('green');
+    animateScore('orange');
     const undoBtn = document.getElementById('undo-btn');
     if (undoBtn) undoBtn.disabled = !isHost || moveHistory.length === 0;
 
@@ -739,7 +793,12 @@ function renderUI() {
     } else {
         buzzBanner.style.display = 'none';
         timerBox.style.display = 'none';
-        if (buzzerBtn) buzzerBtn.disabled = gameState.selectedIdx === null || !!gameState.winner;
+        if (buzzerBtn) {
+            // Feature 1 (2026-11-11): the buzzer stays locked until the host
+            // opens it with openBuzzer() after reading the question.
+            buzzerBtn.disabled = gameState.selectedIdx === null || !!gameState.winner || !!gameState.buzzerLocked;
+            buzzerBtn.textContent = (gameState.selectedIdx !== null && gameState.buzzerLocked) ? '🔒 الجرس مقفل — بانتظار المقدم' : 'اضغط الجرس للإجابة! 🔔';
+        }
     }
 
     const winBanner = document.getElementById('win-banner');
@@ -863,7 +922,7 @@ function handleHostReceive(conn, data) {
         updateConnectedPlayersList();
         broadcastState();
     } else if (data.type === 'BUZZ') {
-        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam) {
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam && !gameState.buzzerLocked) {
             gameState.buzzedPlayer = { name: conn.playerName || 'لاعب', team: conn.playerTeam };
             addEvent(`ضغط ${gameState.buzzedPlayer.name} الجرس للفريق ${gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'}`);
             playBuzzSound();
@@ -945,7 +1004,7 @@ function colorSelectedCell(color) {
         gameState.timeLeft = 0;
         renderUI(); broadcastState(); return;
     }
-    moveHistory.push({ idx, owner: prevOwner, scores: { ...gameState.scores }, winner: gameState.winner });
+    moveHistory.push({ idx, owner: prevOwner, scores: { ...gameState.scores }, winner: gameState.winner, manualAtPush: { ...manualScoreDelta } });
     if (prevOwner === 'green') gameState.scores.green = Math.max(0, gameState.scores.green - 10);
     if (prevOwner === 'orange') gameState.scores.orange = Math.max(0, gameState.scores.orange - 10);
     if (color === 'green') gameState.scores.green += 10;
@@ -990,6 +1049,13 @@ function undoLastMove() {
     const previous = moveHistory.pop();
     gameState.grid[previous.idx].owner = previous.owner;
     gameState.scores = { ...previous.scores };
+    // Manual adjustments made AFTER this move was recorded are not part of the
+    // move and must survive the undo: re-apply the post-snapshot delta.
+    const md = previous.manualAtPush || { green: 0, orange: 0 };
+    gameState.scores = {
+        green: Math.max(0, gameState.scores.green + (manualScoreDelta.green - md.green)),
+        orange: Math.max(0, gameState.scores.orange + (manualScoreDelta.orange - md.orange))
+    };
     gameState.winner = previous.winner;
     gameState.buzzedPlayer = null;
     gameState.timeLeft = 0;
@@ -1010,6 +1076,33 @@ function unlockBuzzer() {
     broadcastState();
 }
 
+/* ---------- openBuzzer (Feature 1, 2026-11-11): host opens the locked buzzer ----------
+   The buzzer is locked when a cell is picked; the host reads the question, then
+   opens the buzzer. Only then does the turn timer start. This is NOT
+   unlockBuzzer() ("تصفير الجرس"), which resets an already-open buzzer. */
+function openBuzzer() {
+    if (!isHost || gameState.selectedIdx === null || !gameState.buzzerLocked || gameState.buzzedPlayer || gameState.winner) return;
+    gameState.buzzerLocked = false;
+    addEvent('فُتح الجرس 🔓');
+    startTurnTimer();
+    renderUI();
+    broadcastState();
+}
+
+/* ---------- adjustScore (Feature 2, 2026-11-11): host manual score tweak ----------
+   +5/-5 per team, e.g. reward a clever answer or penalise misbehaviour.
+   Board untouched, no win/stage effect, and NOT pushed to moveHistory, so
+   the undo button never reverts a manual adjustment. Floor at 0. */
+function adjustScore(team, delta) {
+    if (!isHost || (team !== 'green' && team !== 'orange')) return;
+    const before = gameState.scores[team] || 0;
+    gameState.scores[team] = Math.max(0, before + delta);
+    manualScoreDelta[team] += gameState.scores[team] - before;
+    addEvent((delta > 0 ? '➕ +' : '➖ -') + Math.abs(delta) + ' للفريق ' + (team === 'green' ? 'الأخضر' : 'البرتقالي') + ' (يدوي)');
+    renderUI();
+    broadcastState();
+}
+
 function resetBoard() {
     if (!isHost) return;
     if (!confirm('بدء جولة جديدة؟ سيتم تصفير اللوحة والنقاط.')) return;
@@ -1017,6 +1110,7 @@ function resetBoard() {
     moveHistory = [];
     eventHistory = [];
     gameState.scores = { green: 0, orange: 0 };
+    manualScoreDelta.green = 0; manualScoreDelta.orange = 0;
     addEvent('بدأت جولة جديدة');
     renderUI();
     broadcastState();
@@ -1120,7 +1214,7 @@ function switchTeamCode() {
 }
 
 function sendBuzz() {
-    if (hostConn && hostConn.open && !gameState.buzzedPlayer && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
+    if (hostConn && hostConn.open && !gameState.buzzedPlayer && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && !gameState.buzzerLocked) {
         hostConn.send({ type: 'BUZZ', name: playerInfo.name, team: playerInfo.team });
     }
 }
@@ -1366,6 +1460,7 @@ function initHost() {
     gameState.phase = 'lobby';
     gameState.roster = [];
     gameState.scores = { green: 0, orange: 0 };
+    manualScoreDelta.green = 0; manualScoreDelta.orange = 0;
     gameState.winner = null;
     gameState.stageWinner = null;
     const hostName = ((document.getElementById('player-name-input') || {}).value || '').trim() || 'المقدم';
@@ -1616,6 +1711,7 @@ function broadcastState() {
         questionOptions: gameState.questionOptions || null,
         questionType: gameState.questionType || '',
         buzzedPlayer: gameState.buzzedPlayer,
+        buzzerLocked: gameState.buzzerLocked,
         timeLeft: gameState.timeLeft,
         timerExpired: gameState.timerExpired,
         winner: gameState.winner,
@@ -1680,7 +1776,7 @@ function handleHostReceive(conn, data) {
         renderRoomLobby();
         broadcastState();
     } else if (data.type === 'BUZZ') {
-        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam) {
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam && !gameState.buzzerLocked) {
             gameState.buzzedPlayer = { name: conn.playerName || 'لاعب', team: conn.playerTeam };
             addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
             playBuzzSound();
@@ -1861,6 +1957,7 @@ function startGame(force) {
     if (gameState.stageIndex < 0) gameState.stageIndex = 0;
     gameState.turn = 'green';
     gameState.scores = { green: 0, orange: 0 };
+    manualScoreDelta.green = 0; manualScoreDelta.orange = 0;
     gameState.winner = null;
     gameState.stageWinner = null;
     gameState.paused = null;
@@ -1910,6 +2007,7 @@ function backToLobby() {
 function rematch() {
     if (!isHost) return;
     gameState.scores = { green: 0, orange: 0 };
+    manualScoreDelta.green = 0; manualScoreDelta.orange = 0;
     gameState.stageIndex = STAGE_KEYS.indexOf(gameState.settings.stage || 'easy');
     if (gameState.stageIndex < 0) gameState.stageIndex = 0;
     gameState.winner = null;
@@ -1943,6 +2041,7 @@ function startSinglePlayer() {
     gameState.turn = 'green';
     gameState.roster = [{ name: 'أنت', team: 'green', ready: true, isHost: true, peerId: 'solo' }];
     gameState.scores = { green: 0, orange: 0 };
+    manualScoreDelta.green = 0; manualScoreDelta.orange = 0;
     playerInfo = { name: 'أنت', team: 'green' };
     generateNewGrid();
     document.getElementById('lobby-screen').classList.remove('active');
@@ -2464,7 +2563,7 @@ function playCheerSound() {
 const _origSendBuzz = sendBuzz;
 sendBuzz = function () {
     if (isHost && gameState.settings && gameState.settings.hostPlay) {
-        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner) {
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && !gameState.buzzerLocked) {
             gameState.buzzedPlayer = { name: playerInfo.name || 'المقدم', team: playerInfo.team || 'green' };
             addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
             playBuzzSound();
@@ -2508,6 +2607,8 @@ function renderExtraUI() {
     }
     const jr = document.getElementById('judge-row');
     if (jr) jr.style.display = (isHost && gameState.buzzedPlayer && gameState.selectedIdx !== null && !gameState.winner) ? 'flex' : 'none';
+    const obb = document.getElementById('open-buzzer-btn');
+    if (obb) obb.style.display = (isHost && gameState.selectedIdx !== null && gameState.buzzerLocked && !gameState.buzzedPlayer && !gameState.winner) ? 'inline-flex' : 'none';
     const lm = document.getElementById('last-move');
     if (lm) lm.textContent = gameState.lastMove || '—';
     const lvl = document.getElementById('current-level-badge');
@@ -2768,6 +2869,7 @@ function changeQuestion() {
     if (!isHost || gameState.selectedIdx === null || gameState.winner || gameState.stageWinner) return;
     stopHostTimer();
     gameState.buzzedPlayer = null;
+    gameState.buzzerLocked = true;
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
     addEvent('تم الانتقال إلى سؤال آخر');
@@ -3044,6 +3146,7 @@ function startTvView(roomCode) {
             + '<div class="tv-scores"><span class="tv-score-green">🟢 الأخضر: <b id="tv-score-green">0</b></span>'
             + '<span class="tv-score-orange">🟠 البرتقالي: <b id="tv-score-orange">0</b></span></div>'
             + '<div id="tv-turn" class="tv-turn">بانتظار بدء اللعبة…</div>'
+            + '<div id="tv-buzzer-state" class="tv-turn" style="display:none;"></div>'
             + '<div id="tv-grid"></div>'
             + '<div id="tv-question" class="tv-question">—</div>'
             + '<div id="tv-options" class="tv-options"></div>'
@@ -3113,15 +3216,22 @@ function tvConnect(roomId) {
 function renderTv() {
     const tv = document.getElementById('tv-screen');
     if (!tv) return;
-    const sg = document.getElementById('tv-score-green');
-    if (sg) sg.textContent = gameState.scores.green;
-    const so = document.getElementById('tv-score-orange');
-    if (so) so.textContent = gameState.scores.orange;
+    animateScore('green');
+    animateScore('orange');
     const turnEl = document.getElementById('tv-turn');
     if (turnEl) {
         turnEl.textContent = gameState.phase === 'playing'
             ? ('دور: ' + turnPlayerName(gameState.turn) + (gameState.turn === 'green' ? ' 🟢' : ' 🟠'))
             : 'بانتظار بدء اللعبة…';
+    }
+    const bs = document.getElementById('tv-buzzer-state');
+    if (bs) {
+        if (gameState.phase === 'playing' && gameState.selectedIdx !== null && !gameState.buzzedPlayer && !gameState.winner) {
+            bs.style.display = 'block';
+            bs.textContent = gameState.buzzerLocked ? '🔒 الجرس مقفل — بانتظار المقدم' : '🔓 الجرس مفتوح';
+        } else {
+            bs.style.display = 'none';
+        }
     }
     const qEl = document.getElementById('tv-question');
     if (qEl) qEl.textContent = gameState.questionText || '—';
@@ -3239,7 +3349,15 @@ const _bSelectCell = selectCell;
 selectCell = function (idx) {
     _bSelectCell(idx);
     if (gameState.selectedIdx === idx && isHost && !gameState.winner && !gameState.stageWinner) {
-        startTurnTimer();
+        // Feature 1 (2026-11-11): the buzzer stays LOCKED when a cell is picked
+        // — the host reads the question first, then opens it with openBuzzer().
+        // The turn timer starts at the unlock, not at the pick.
+        gameState.buzzerLocked = true;
+        stopHostTimer();
+        gameState.timeLeft = 0;
+        gameState.timerExpired = false;
+        renderUI();
+        broadcastState();
     }
 };
 
