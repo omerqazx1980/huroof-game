@@ -2818,15 +2818,31 @@ function tryPickType(type, letter, stage) {
         gameState.questionType = qtype;
     };
     if (type === 'word') {
-        const pool = S.words && S.words[stage] && S.words[stage][letter];
-        const picked = pool && pool.length ? pickFromPool(usedKey('words', stage + ':' + letter), pool) : null;
+        // Harder-word rule (2026-11-11, "أصعب للكل"): the correct word must be
+        // at least MIN_WORD_LEN[stage] letters long, so the prompt is not
+        // trivially a 2-3 letter word. pickFromPool tracks by array index, so
+        // the filtered pool gets its own used-key (its order is deterministic).
+        const wordOf = (x) => typeof x === 'string' ? x : (x.a || x.answer || '');
+        const wlen = (x) => wordOf(x).replace(/ـ/g, '').trim().length;
+        const MIN_WORD_LEN = { easy: 4, medium: 5, hard: 5, expert: 5 };
+        const minLen = MIN_WORD_LEN[stage] || 4;
+        const fullPool = (S.words && S.words[stage] && S.words[stage][letter]) || [];
+        const longPool = fullPool.filter((w) => wlen(w) >= minLen);
+        let pool, usedKeyName, longEnough;
+        if (longPool.length) {
+            pool = longPool; usedKeyName = 'words-long'; longEnough = true;
+        } else {
+            // Fallback: the longest words available for this letter+stage.
+            pool = [...fullPool].sort((a, b) => wlen(b) - wlen(a)).slice(0, 3);
+            usedKeyName = 'words-longfb'; longEnough = false;
+        }
+        const picked = pool.length ? pickFromPool(usedKey(usedKeyName, stage + ':' + letter), pool) : null;
         if (!picked) return false;
         const it = picked.item;
         // Fix 2026-11-09: word questions showed no options at all (opts was
         // null), so players had nothing to choose from — only the buzzer.
         // Now every word question is a 3-option choice: the correct word plus
         // 2 distractors from the same stage but different letters.
-        const wordOf = (x) => typeof x === 'string' ? x : (x.a || x.answer || '');
         const correct = wordOf(it);
         let opts = null;
         if (correct) {
@@ -2847,7 +2863,10 @@ function tryPickType(type, letter, stage) {
             }
         }
         if (typeof it === 'string') {
-            setQ('اذكر كلمة تبدأ بحرف ' + letter + ' (مرحلة ' + STAGE_NAMES[stage] + ')', it, opts, 'الكلمة من ' + it.length + ' أحرف', 'word');
+            const prompt = longEnough
+                ? 'اذكر كلمة تبدأ بحرف ' + letter + ' من ' + minLen + ' أحرف على الأقل (مرحلة ' + STAGE_NAMES[stage] + ')'
+                : 'اذكر كلمة تبدأ بحرف ' + letter + ' (مرحلة ' + STAGE_NAMES[stage] + ')';
+            setQ(prompt, it, opts, 'الكلمة من ' + it.length + ' أحرف', 'word');
         } else {
             setQ(it.q, it.a || it.answer || '-', opts, '', 'word');
         }
