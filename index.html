@@ -115,6 +115,24 @@
         .final-card { background: var(--card); border-radius: 20px; padding: 30px 20px; text-align: center; max-width: 480px; width: 100%; }
         .opt-btn { display: block; width: 100%; margin: 6px 0; padding: 14px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; border: 2px solid #38bdf8; background: #0f172a; color: #f8fafc; cursor: pointer; }
         .opt-btn:active { transform: scale(.97); }
+        /* ===== Effects (2026-11-11): option flash, cell pop, screen/banner transitions, turn pulse ===== */
+        .opt-btn:disabled { opacity: .45; cursor: not-allowed; border-color: #475569; }
+        .opt-btn.opt-correct { background: #16a34a; border-color: #4ade80; color: #fff; }
+        .opt-btn.opt-wrong { background: #dc2626; border-color: #f87171; color: #fff; }
+        .hex-cell.cell-pop { animation: cellPop .6s ease; z-index: 7; }
+        @keyframes cellPop { 0% { transform: scale(1); filter: brightness(1); } 35% { transform: scale(1.18); filter: brightness(1.35) drop-shadow(0 0 8px rgba(250,204,21,.9)); } 100% { transform: scale(1); filter: brightness(1); } }
+        .screen.active { animation: screenIn .3s ease; }
+        @keyframes screenIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        #stage-banner { animation: bannerIn .35s ease; }
+        @keyframes bannerIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+        #final-screen.show { animation: finalIn .35s ease; }
+        @keyframes finalIn { from { opacity: 0; } to { opacity: 1; } }
+        #final-screen.show .final-card { animation: cardIn .35s ease; }
+        @keyframes cardIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+        #turn-bar.turn-green, #turn-bar.turn-orange { animation: turnPulse 1.6s ease-in-out infinite; }
+        @keyframes turnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); } 50% { box-shadow: 0 0 12px 2px rgba(56,189,248,.45); } }
+        .tv-turn { animation: turnPulseText 1.6s ease-in-out infinite; }
+        @keyframes turnPulseText { 0%, 100% { text-shadow: 0 0 0 rgba(56,189,248,0); } 50% { text-shadow: 0 0 14px rgba(56,189,248,.8); } }
         .reaction-btn { font-size: 1.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
         #reactions-float { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); font-size: 2.4rem; pointer-events: none; z-index: 40; }
         .float-emoji { position: absolute; animation: floatUp 2.6s ease-out forwards; }
@@ -611,6 +629,8 @@ let playerInfo = { name: "", team: "" };
 let timerInterval = null;
 let playerCounter = { green: 0, orange: 0 };
 let confettiFired = false;
+let cellPop = { idx: -1, until: 0 }; // transient pop on a freshly coloured cell
+let optionFlash = null; // { choice, correct, until } — transient flash on the tapped option
 let hostInitializing = false;
 let joinInitializing = false;
 let moveHistory = [];
@@ -732,7 +752,7 @@ function renderUI() {
             const idx = r * 5 + c;
             const cell = gameState.grid[idx];
             const cellEl = document.createElement('div');
-            cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '');
+            cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '') + (cellPop.idx === idx && Date.now() < cellPop.until ? ' cell-pop' : '');
             cellEl.textContent = cell.letter;
             cellEl.setAttribute('role', 'button');
             cellEl.setAttribute('tabindex', isHost ? '0' : '-1');
@@ -928,6 +948,11 @@ function handleHostReceive(conn, data) {
             playBuzzSound();
             startHostTimer();
         }
+    } else if (data.type === 'ANSWER_OPT') {
+        // Auto-judge (kept in sync with the rewritten handler below).
+        if (!gameState.buzzedPlayer || !conn.playerName || conn.playerName !== gameState.buzzedPlayer.name) return;
+        if (typeof data.choice !== 'string') return;
+        applyOptionAnswer(data.choice);
     }
 }
 
@@ -1029,8 +1054,10 @@ function colorSelectedCell(color) {
 function judgeAnswer(correct) {
     if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
     if (correct) {
+        playCheerSound();
         colorSelectedCell(gameState.buzzedPlayer.team);
     } else {
+        playTimeUpSound();
         const nm = gameState.buzzedPlayer.name;
         const tm = gameState.buzzedPlayer.team;
         stopHostTimer();
@@ -1042,6 +1069,45 @@ function judgeAnswer(correct) {
         renderUI();
         broadcastState();
     }
+}
+
+/* ---------- submitOptionAnswer / applyOptionAnswer: clickable options (auto-judge) ----------
+   Fix 2026-11-11 (user report): the .opt-btn buttons were display-only. Now the
+   player who buzzed can tap an option on their own phone:
+   - correct -> the cell is coloured for their team (+10, win check runs), cheer sound;
+   - wrong -> fail sound, the buzz is cleared, the buzzer stays UNLOCKED and a fresh
+     10s window starts so the other team can try the same question.
+   The host ✅/❌ judge buttons stay as the manual fallback (spoken answers and
+   questions without options). A tap is only possible after buzzing, and buzzing
+   still requires the host to have opened the buzzer. */
+function applyOptionAnswer(choice) {
+    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    if (!gameState.questionOptions || !gameState.questionOptions.length) return;
+    const team = gameState.buzzedPlayer.team;
+    const nm = gameState.buzzedPlayer.name;
+    if (choice === gameState.answerText) {
+        optionFlash = { choice: choice, correct: true, until: Date.now() + 900 };
+        playCheerSound();
+        colorSelectedCell(team);
+    } else {
+        optionFlash = { choice: choice, correct: false, until: Date.now() + 900 };
+        playTimeUpSound();
+        stopHostTimer();
+        gameState.buzzedPlayer = null;
+        gameState.timeLeft = 0;
+        gameState.timerExpired = false;
+        gameState.lastMove = '❌ إجابة خاطئة من ' + nm + ' (' + (team === 'green' ? 'الفريق الأخضر' : 'الفريق البرتقالي') + ') — الجرس مفتوح للفريق الآخر';
+        addEvent('إجابة خاطئة من ' + nm);
+        startHostTimer(); // fresh 10s window for the next player (Fix 5 rule)
+    }
+}
+
+function submitOptionAnswer(opt) {
+    if (!gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    const myName = playerInfo.name || '';
+    if (!myName || gameState.buzzedPlayer.name !== myName) return;
+    if (isHost) { applyOptionAnswer(opt); return; }
+    if (hostConn && hostConn.open) { try { hostConn.send({ type: 'ANSWER_OPT', choice: opt }); } catch (e) {} }
 }
 
 function undoLastMove() {
@@ -1782,6 +1848,11 @@ function handleHostReceive(conn, data) {
             playBuzzSound();
             startHostTimer();
         }
+    } else if (data.type === 'ANSWER_OPT') {
+        // Auto-judge: the buzzing player tapped an option on their phone.
+        if (!gameState.buzzedPlayer || !conn.playerName || conn.playerName !== gameState.buzzedPlayer.name) return;
+        if (typeof data.choice !== 'string') return;
+        applyOptionAnswer(data.choice);
     } else if (data.type === 'REACTION') {
         if (!['👏', '😄', '🎉'].includes(data.emoji)) return;
         showReaction(data.emoji, conn.playerName || 'لاعب');
@@ -2596,11 +2667,18 @@ function renderExtraUI() {
         optBox.innerHTML = '';
         const opts = gameState.questionOptions;
         if (opts && opts.length) {
+            const myName = playerInfo.name || '';
+            const canTap = !!gameState.buzzedPlayer && !!myName && gameState.buzzedPlayer.name === myName;
             opts.forEach((opt) => {
                 const b = document.createElement('button');
                 b.className = 'opt-btn';
                 b.type = 'button';
                 b.textContent = opt;
+                b.disabled = !canTap;
+                b.onclick = () => submitOptionAnswer(opt);
+                if (optionFlash && optionFlash.choice === opt && Date.now() < optionFlash.until) {
+                    b.classList.add(optionFlash.correct ? 'opt-correct' : 'opt-wrong');
+                }
                 optBox.appendChild(b);
             });
         }
@@ -2854,6 +2932,7 @@ function selectCell(idx) {
     gameState.buzzedPlayer = null;
     gameState.timerExpired = false;
     gameState.selectedIdx = idx;
+    optionFlash = null;
     addEvent('اختير الحرف ' + gameState.grid[idx].letter);
     pickQuestionForLetter(gameState.grid[idx].letter);
     renderUI();
@@ -2869,6 +2948,7 @@ function changeQuestion() {
     if (!isHost || gameState.selectedIdx === null || gameState.winner || gameState.stageWinner) return;
     stopHostTimer();
     gameState.buzzedPlayer = null;
+    optionFlash = null;
     gameState.buzzerLocked = true;
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
@@ -2894,6 +2974,7 @@ function onLineComplete(team) {
         gameState.winner = null;
         gameState.lastMove = '🏆 أكمل الفريق ' + (team === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' خطاً في مرحلة ' + STAGE_NAMES[STAGE_KEYS[gameState.stageIndex]] + '!';
         playCheerSound();
+        triggerConfetti();
     }
 }
 
@@ -2922,6 +3003,7 @@ colorSelectedCell = function (color) {
 const _origGenerateNewGrid = generateNewGrid;
 generateNewGrid = function () {
     _origGenerateNewGrid();
+    optionFlash = null;
     gameState.questionOptions = null;
     gameState.questionHint = '';
     gameState.stageWinner = null;
@@ -3257,7 +3339,7 @@ function renderTv() {
                 const idx = r * 5 + c;
                 const cell = gameState.grid[idx];
                 const d = document.createElement('div');
-                d.className = 'hex-cell ' + (cell ? cell.owner : 'neutral') + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '');
+                d.className = 'hex-cell ' + (cell ? cell.owner : 'neutral') + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '') + (cellPop.idx === idx && Date.now() < cellPop.until ? ' cell-pop' : '');
                 d.textContent = cell ? cell.letter : '';
                 row.appendChild(d);
             }
@@ -3370,6 +3452,7 @@ colorSelectedCell = function (color) {
     _cColorSelectedCell(color);
     const after = gameState.grid[idx] ? gameState.grid[idx].owner : null;
     if (after !== before) {
+        cellPop = { idx: idx, until: Date.now() + 600 };
         playPopSound();
         if ((after === 'green' || after === 'orange') && !gameState.winner && !gameState.stageWinner) {
             gameState.turn = gameState.turn === 'green' ? 'orange' : 'green';
