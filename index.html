@@ -760,11 +760,21 @@ function renderUI() {
             cellEl.className = `hex-cell ${cell.owner}` + (gameState.selectedIdx === idx ? ' selected' : '') + ((gameState.winningPath || []).includes(idx) ? ' winning-cell' : '') + (cellPop.idx === idx && Date.now() < cellPop.until ? ' cell-pop' : '');
             cellEl.textContent = cell.letter;
             cellEl.setAttribute('role', 'button');
-            cellEl.setAttribute('tabindex', isHost ? '0' : '-1');
+            // (2026-11-13) The host always picks by tapping a cell. A remote
+            // player can also pick the letter from their own screen — but
+            // only when it is their team's turn and no question is active.
+            const myTeam = playerInfo.team || null;
+            const playerCanPick = !isHost && myTeam && myTeam === gameState.turn
+                && gameState.phase === 'playing' && !gameState.winner && !gameState.stageWinner
+                && gameState.selectedIdx === null && cell.owner === 'neutral';
+            cellEl.setAttribute('tabindex', (isHost || playerCanPick) ? '0' : '-1');
             cellEl.setAttribute('aria-label', `الحرف ${cell.letter}${cell.owner !== 'neutral' ? `، للفريق ${cell.owner === 'green' ? 'الأخضر' : 'البرتقالي'}` : ''}`);
             if (isHost) {
                 cellEl.onclick = () => selectCell(idx);
                 cellEl.onkeydown = (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectCell(idx); } };
+            } else if (playerCanPick) {
+                cellEl.onclick = () => sendPick(idx);
+                cellEl.onkeydown = (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); sendPick(idx); } };
             }
             rowEl.appendChild(cellEl);
         }
@@ -1301,6 +1311,14 @@ function switchTeamCode() {
 function sendBuzz() {
     if (hostConn && hostConn.open && !gameState.buzzedPlayer && !gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && !gameState.buzzerLocked) {
         hostConn.send({ type: 'BUZZ', name: playerInfo.name, team: playerInfo.team });
+    }
+}
+
+// (2026-11-13) A remote player picks the letter from their own screen.
+// Only when it is their team's turn and no question is active yet.
+function sendPick(idx) {
+    if (hostConn && hostConn.open && gameState.phase === 'playing' && !gameState.winner && !gameState.stageWinner && gameState.selectedIdx === null && playerInfo.team && playerInfo.team === gameState.turn) {
+        hostConn.send({ type: 'PICK', idx: idx, name: playerInfo.name, team: playerInfo.team });
     }
 }
 
@@ -1861,6 +1879,18 @@ function handleHostReceive(conn, data) {
         updateConnectedPlayersList();
         renderRoomLobby();
         broadcastState();
+    } else if (data.type === 'PICK') {
+        // (2026-11-13) A remote player picks the letter from their own
+        // screen. Only the team whose turn it is may pick, only when no
+        // question is active yet, and only an uncoloured cell.
+        if (gameState.phase !== 'playing' || gameState.winner || gameState.stageWinner) return;
+        if (typeof data.idx !== 'number') return;
+        if (!conn.playerTeam || conn.playerTeam !== gameState.turn) return;
+        if (gameState.selectedIdx !== null) return;
+        const pickCell = gameState.grid[data.idx];
+        if (!pickCell || pickCell.owner !== 'neutral') return;
+        addEvent('اختار ' + (conn.playerName || 'لاعب') + ' الحرف ' + pickCell.letter + ' للفريق ' + (conn.playerTeam === 'green' ? 'الأخضر' : 'البرتقالي'));
+        selectCell(data.idx);
     } else if (data.type === 'BUZZ') {
         // (2026-11-13) A team that already timed out on this question cannot
         // buzz again — the answer has moved to the other team.
