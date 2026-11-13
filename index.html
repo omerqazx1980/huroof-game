@@ -377,6 +377,7 @@
             </div>
             <div id="current-question" style="font-size: 1.3rem; font-weight: bold; margin: 10px 0;">اختر حرفاً من الشبكة لبدء السؤال</div>
             <div id="question-options"></div>
+            <button id="buzzer-btn" class="btn buzzer-btn" style="display: none; width: 100%; margin-top: 12px; padding: 16px; font-size: 1.3rem;" onclick="sendBuzz()">اضغط الجرس للإجابة! 🔔</button>
             <div id="last-move">—</div>
         </div>
 
@@ -422,7 +423,6 @@
                 الفريق: <span id="player-team-badge" class="badge"></span>
                 <button class="btn btn-gray" id="switch-team-btn" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeamCode()">تبديل</button>
             </div>
-            <button id="buzzer-btn" class="btn buzzer-btn" onclick="sendBuzz()">اضغط الجرس للإجابة! 🔔</button>
             <div id="reactions-row" class="flex-row" style="margin-top: 12px;">
                 <button class="reaction-btn" onclick="sendReaction('👏')">👏</button>
                 <button class="reaction-btn" onclick="sendReaction('😄')">😄</button>
@@ -1088,6 +1088,9 @@ function judgeAnswer(correct) {
         addEvent('إجابة خاطئة من ' + nm);
         renderUI();
         broadcastState();
+        // (2026-11-13) Solo: auto-buzz again so the single player can retry
+        // without a buzzer button.
+        if (gameState.solo) sendBuzz();
     }
 }
 
@@ -1119,6 +1122,9 @@ function applyOptionAnswer(choice) {
         gameState.lastMove = '❌ إجابة خاطئة من ' + nm + ' (' + (team === 'green' ? 'الفريق الأخضر' : 'الفريق البرتقالي') + ') — الجرس مفتوح للفريق الآخر';
         addEvent('إجابة خاطئة من ' + nm);
         startHostTimer(); // fresh 10s window for the next player (Fix 5 rule)
+        // (2026-11-13) Solo: no buzzer button — auto-buzz the single player
+        // again so they can retry the same question straight away.
+        if (gameState.solo) sendBuzz();
     }
 }
 
@@ -1181,6 +1187,12 @@ function openBuzzer() {
 function maybeAutoOpenBuzzer() {
     if (isHost && gameState.settings && gameState.settings.hostPlay && gameState.selectedIdx !== null && gameState.buzzerLocked && !gameState.buzzedPlayer && !gameState.winner && !gameState.stageWinner) {
         openBuzzer();
+    }
+    // (2026-11-13) Solo: no buzzer race — the single player is auto-buzzed
+    // when the question is live, so they tap an option straight away (the
+    // buzzer button itself is hidden in solo).
+    if (gameState.solo && isHost && gameState.selectedIdx !== null && !gameState.buzzedPlayer && !gameState.winner && !gameState.stageWinner && !gameState.buzzerLocked && !gameState.timerExpired) {
+        sendBuzz();
     }
 }
 
@@ -2748,6 +2760,14 @@ function renderExtraUI() {
     if (jr) jr.style.display = (isHost && gameState.buzzedPlayer && gameState.selectedIdx !== null && !gameState.winner) ? 'flex' : 'none';
     const obb = document.getElementById('open-buzzer-btn');
     if (obb) obb.style.display = (isHost && gameState.selectedIdx !== null && gameState.buzzerLocked && !gameState.buzzedPlayer && !gameState.winner) ? 'inline-flex' : 'none';
+    // (2026-11-13) The buzzer now sits directly under the question. It shows
+    // only to a playing participant with an active question — and never in
+    // solo (no race there; the single player is auto-buzzed instead).
+    const bb = document.getElementById('buzzer-btn');
+    if (bb) {
+        const showBuzzer = gameState.phase === 'playing' && !!playerInfo.team && !gameState.solo && gameState.selectedIdx !== null && !gameState.winner && !gameState.stageWinner;
+        bb.style.display = showBuzzer ? '' : 'none';
+    }
     // During play, non-host players only see the buttons they need (buzzer,
     // reactions, hint, mute). Team-switch and pass-turn are host/lobby actions.
     const hideForPlayers = !isHost && gameState.phase === 'playing';
@@ -2921,24 +2941,39 @@ function tryPickType(type, letter, stage) {
         const it = picked.item;
         // Fix 2026-11-09: word questions showed no options at all (opts was
         // null), so players had nothing to choose from — only the buzzer.
-        // Now every word question is a 4-option choice: the correct word plus
-        // 3 distractors from the same stage but different letters.
+        // (2026-11-13) Distractors must start with the SAME letter and be
+        // SHORTER than the minimum length: otherwise only the correct word
+        // starts with the letter and the question is trivially easy (the
+        // user laughed at "expert" questions where 3 options did not even
+        // start with the letter). Fallback — only 6/112 letter/stage groups
+        // lack 3 short same-letter words — is short words from other letters
+        // of the same stage (at least short, so not a second valid answer).
         const correct = wordOf(it);
         let opts = null;
         if (correct) {
             const seen = new Set([correct]);
-            const cands = [];
-            const stageWords = (S.words && S.words[stage]) || {};
-            Object.keys(stageWords).forEach((ltr) => {
-                if (ltr === letter) return;
-                (stageWords[ltr] || []).forEach((w) => {
-                    const s = wordOf(w);
-                    if (s && !seen.has(s)) { seen.add(s); cands.push(s); }
-                });
+            // Same-letter, shorter than the minimum (the real challenge) —
+            // taken FIRST, so they are never diluted by the fallback pool.
+            const same = [];
+            (fullPool || []).forEach((w) => {
+                const s = wordOf(w);
+                if (s && s !== correct && wlen(s) < minLen && !seen.has(s)) { seen.add(s); same.push(s); }
             });
-            if (cands.length >= 3) {
-                const d = [];
-                while (d.length < 3 && cands.length) d.push(cands.splice(Math.floor(Math.random() * cands.length), 1)[0]);
+            // Fallback: short words from other letters of the same stage.
+            const fb = [];
+            if (same.length < 3) {
+                const stageWords = (S.words && S.words[stage]) || {};
+                Object.keys(stageWords).forEach((ltr) => {
+                    if (ltr === letter) return;
+                    (stageWords[ltr] || []).forEach((w) => {
+                        const s = wordOf(w);
+                        if (s && !seen.has(s) && wlen(s) < minLen) { seen.add(s); fb.push(s); }
+                    });
+                });
+            }
+            const d = [...same.sort(() => Math.random() - 0.5).slice(0, 3)];
+            while (d.length < 3 && fb.length) d.push(fb.splice(Math.floor(Math.random() * fb.length), 1)[0]);
+            if (d.length === 3) {
                 opts = [correct, d[0], d[1], d[2]].sort(() => Math.random() - 0.5);
             }
         }
@@ -3545,6 +3580,12 @@ startHostTimer = function () {
                 if (!gameState.buzzedOutTeams) gameState.buzzedOutTeams = {};
                 gameState.buzzedOutTeams[outTeam] = true;
             }
+            // (2026-11-13) Solo: there is no other team to hand the question
+            // to, so a timeout discards it straight away.
+            if (gameState.solo) {
+                doPassTurn();
+                gameState.lastMove = '⏰ انتهى وقت الإجابة — تم التمرير تلقائياً';
+            } else {
             const otherTeam = outTeam === 'green' ? 'orange' : 'green';
             const remaining = (gameState.turnTimeLeftAtBuzz || 0) - 10;
             const otherOut = !!(gameState.buzzedOutTeams && gameState.buzzedOutTeams[otherTeam]);
@@ -3557,6 +3598,7 @@ startHostTimer = function () {
                 gameState.buzzerLocked = false;
                 gameState.lastMove = '⏰ انتهى وقت الإجابة — الدور للفريق ' + (otherTeam === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' بباقي الوقت (' + remaining + ' ث)';
                 startTurnTimer(remaining);
+            }
             }
             renderUI();
             broadcastState();
