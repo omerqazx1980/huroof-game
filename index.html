@@ -368,6 +368,8 @@
             <div class="border-indicator border-green">▼ ضفة الفريق الأخضر (من الأعلى إلى الأسفل) ▼</div>
         </div>
 
+        <button class="btn btn-primary" id="open-buzzer-btn" style="display: none; width: 100%; padding: 16px; font-size: 1.3rem; margin-top: 0;" onclick="openBuzzer()">فتح الجرس 🔓</button>
+
         <div class="panel" style="text-align: center;">
             <div class="flex-row" style="justify-content: center; gap: 15px; margin-bottom: 6px;">
                 <span style="font-size: 1.1rem; color: #94a3b8;">الحرف المختار: <strong id="current-letter" style="color: #38bdf8; font-size: 1.5rem;">-</strong></span>
@@ -392,7 +394,6 @@
                 <button class="btn btn-gray" onclick="colorSelectedCell('neutral')">إعادة للأصفر</button>
                 <button class="btn btn-primary" onclick="changeQuestion()">سؤال آخر 🔄</button>
                 <button class="btn btn-danger" onclick="unlockBuzzer()">تصفير الجرس</button>
-                <button class="btn btn-primary" id="open-buzzer-btn" style="display: none;" onclick="openBuzzer()">فتح الجرس 🔓</button>
                 <button class="btn btn-primary" onclick="passTurn()">تمرير الدور ⏭️</button>
                 <button class="btn btn-gray" id="undo-btn" onclick="undoLastMove()">تراجع ↩️</button>
                 <button class="btn btn-gray" id="next-stage-btn" style="display:none;" onclick="advanceStage()">المرحلة التالية ⏭️</button>
@@ -415,7 +416,7 @@
             <div style="margin-bottom: 8px;">
                 معرّفك: <strong id="player-id-label" style="color: #38bdf8;"></strong> | 
                 الفريق: <span id="player-team-badge" class="badge"></span>
-                <button class="btn btn-gray" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeamCode()">تبديل</button>
+                <button class="btn btn-gray" id="switch-team-btn" style="padding: 4px 10px; font-size: 0.8rem; margin-right: 8px;" onclick="switchTeamCode()">تبديل</button>
             </div>
             <button id="buzzer-btn" class="btn buzzer-btn" onclick="sendBuzz()">اضغط الجرس للإجابة! 🔔</button>
             <div id="reactions-row" class="flex-row" style="margin-top: 12px;">
@@ -423,7 +424,7 @@
                 <button class="reaction-btn" onclick="sendReaction('😄')">😄</button>
                 <button class="reaction-btn" onclick="sendReaction('🎉')">🎉</button>
                 <button class="btn btn-gray" id="hint-btn" onclick="useHint()">تلميح 💡 (<span id="hints-left">3</span>)</button>
-                <button class="btn btn-gray" onclick="passTurn()">تمرير الدور ⏭️</button>
+                <button class="btn btn-gray" id="player-pass-btn" onclick="passTurn()">تمرير الدور ⏭️</button>
                 <button class="icon-btn mute-btn" onclick="toggleMute()">🔊</button>
             </div>
         </div>
@@ -2687,6 +2688,13 @@ function renderExtraUI() {
     if (jr) jr.style.display = (isHost && gameState.buzzedPlayer && gameState.selectedIdx !== null && !gameState.winner) ? 'flex' : 'none';
     const obb = document.getElementById('open-buzzer-btn');
     if (obb) obb.style.display = (isHost && gameState.selectedIdx !== null && gameState.buzzerLocked && !gameState.buzzedPlayer && !gameState.winner) ? 'inline-flex' : 'none';
+    // During play, non-host players only see the buttons they need (buzzer,
+    // reactions, hint, mute). Team-switch and pass-turn are host/lobby actions.
+    const hideForPlayers = !isHost && gameState.phase === 'playing';
+    const swBtn = document.getElementById('switch-team-btn');
+    if (swBtn) swBtn.style.display = hideForPlayers ? 'none' : '';
+    const ppBtn = document.getElementById('player-pass-btn');
+    if (ppBtn) ppBtn.style.display = hideForPlayers ? 'none' : '';
     const lm = document.getElementById('last-move');
     if (lm) lm.textContent = gameState.lastMove || '—';
     const lvl = document.getElementById('current-level-badge');
