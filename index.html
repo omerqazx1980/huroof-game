@@ -1053,7 +1053,7 @@ function colorSelectedCell(color) {
    ✅ colours the cell for the buzzing player's team (+10, win check runs),
    ❌ re-opens the buzzer so the other team can try the same question. */
 function judgeAnswer(correct) {
-    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner || gameState.timerExpired) return;
     if (correct) {
         playCheerSound();
         colorSelectedCell(gameState.buzzedPlayer.team);
@@ -1082,7 +1082,7 @@ function judgeAnswer(correct) {
    questions without options). A tap is only possible after buzzing, and buzzing
    still requires the host to have opened the buzzer. */
 function applyOptionAnswer(choice) {
-    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    if (!isHost || !gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner || gameState.timerExpired) return;
     if (!gameState.questionOptions || !gameState.questionOptions.length) return;
     const team = gameState.buzzedPlayer.team;
     const nm = gameState.buzzedPlayer.name;
@@ -1104,7 +1104,7 @@ function applyOptionAnswer(choice) {
 }
 
 function submitOptionAnswer(opt) {
-    if (!gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner) return;
+    if (!gameState.buzzedPlayer || gameState.selectedIdx === null || gameState.winner || gameState.timerExpired) return;
     const myName = playerInfo.name || '';
     if (!myName || gameState.buzzedPlayer.name !== myName) return;
     if (isHost) { applyOptionAnswer(opt); return; }
@@ -2678,7 +2678,7 @@ function renderExtraUI() {
         const opts = gameState.questionOptions;
         if (opts && opts.length) {
             const myName = playerInfo.name || '';
-            const canTap = !!gameState.buzzedPlayer && !!myName && gameState.buzzedPlayer.name === myName;
+            const canTap = !!gameState.buzzedPlayer && !!myName && gameState.buzzedPlayer.name === myName && !gameState.timerExpired;
             opts.forEach((opt) => {
                 const b = document.createElement('button');
                 b.className = 'opt-btn';
@@ -3448,6 +3448,8 @@ startHostTimer = function () {
     // setting (30/60/none) still governs the turn itself; the next cell pick
     // starts a fresh turn timer. With timer 'none' the buzz window is still
     // 10s, so the game cannot stall after a buzz.
+    // (2026-11-13) On expiry the turn auto-passes to the other team
+    // (doPassTurn) — nobody can answer after time is up.
     stopHostTimer();
     MAX_TIMER_SECONDS = 10;
     gameState.timeLeft = 10;
@@ -3465,6 +3467,8 @@ startHostTimer = function () {
             gameState.timerExpired = true;
             stopHostTimer();
             playTimeUpSound();
+            doPassTurn();
+            gameState.lastMove = '⏰ انتهى وقت الإجابة — تم التمرير تلقائياً';
             renderUI();
             broadcastState();
         }
