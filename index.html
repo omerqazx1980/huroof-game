@@ -220,6 +220,7 @@
                     <div>
                         <label class="field-label">مؤقّت الدور:</label>
                         <select id="timer-select" class="select-field">
+                            <option value="90">90 ثانية (1.5 دقيقة)</option>
                             <option value="60">60 ثانية</option>
                             <option value="30">30 ثانية</option>
                             <option value="0">بدون مؤقّت</option>
@@ -639,7 +640,7 @@ let hostInitializing = false;
 let joinInitializing = false;
 let moveHistory = [];
 let eventHistory = [];
-let MAX_TIMER_SECONDS = 60; // turn timer: was the 10s buzzer timer; set per-turn from the lobby (30/60/none) in startTurnTimer
+let MAX_TIMER_SECONDS = 90; // turn timer: was the 10s buzzer timer; set per-turn from the lobby (30/60/90/none) in startTurnTimer
 
 let gameState = {
     grid: [],
@@ -1460,12 +1461,13 @@ window.addEventListener('beforeunload', () => {
    the data connection itself. All of that is fixed below. */
 
 Object.assign(gameState, {
-    phase: 'lobby', stageIndex: 0, turn: 'green', turnSeconds: 60,
+    phase: 'lobby', stageIndex: 0, turn: 'green', turnSeconds: 90,
     paused: null, lastMove: '', questionOptions: null, questionType: '',
     questionHint: '', hintsUsed: {}, roster: [],
-    settings: { mode: '1v1', stage: 'easy', timer: 60, hostPlay: false, hostTeam: 'green', progression: 'stages' },
+    settings: { mode: '1v1', stage: 'easy', timer: 90, hostPlay: false, hostTeam: 'green', progression: 'stages' },
     bankStats: { used: 0, total: 0, version: '' },
-    stageWinner: null, solo: false, roomCodeShort: '', winningPath: []
+    stageWinner: null, solo: false, roomCodeShort: '', winningPath: [],
+    turnTimeLeftAtBuzz: 0, buzzedOutTeams: {}
 });
 
 const CONN_MAX_ATTEMPTS = 3;
@@ -1529,7 +1531,7 @@ function initHost() {
         mode: (document.getElementById('mode-select') || {}).value || '1v1',
         stage: (document.getElementById('stage-select') || {}).value || 'easy',
         progression: (document.getElementById('progression-select') || {}).value || 'stages',
-        timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
+        timer: parseInt(((document.getElementById('timer-select') || {}).value || '90'), 10),
         hostPlay: !!((document.getElementById('host-play-check') || {}).checked),
         hostTeam: (document.getElementById('host-team-select') || {}).value || 'green'
     };
@@ -1798,7 +1800,7 @@ function broadcastState() {
         winningPath: gameState.winningPath || [],
         stageIndex: gameState.stageIndex || 0,
         turn: gameState.turn || 'green',
-        turnSeconds: gameState.turnSeconds || 60,
+        turnSeconds: gameState.turnSeconds || 90,
         paused: gameState.paused || null,
         lastMove: gameState.lastMove || '',
         hintsUsed: gameState.hintsUsed || {},
@@ -1855,8 +1857,13 @@ function handleHostReceive(conn, data) {
         renderRoomLobby();
         broadcastState();
     } else if (data.type === 'BUZZ') {
-        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam && !gameState.buzzerLocked) {
+        // (2026-11-13) A team that already timed out on this question cannot
+        // buzz again — the answer has moved to the other team.
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && conn.playerTeam && !gameState.buzzerLocked && !(gameState.buzzedOutTeams && gameState.buzzedOutTeams[conn.playerTeam])) {
             gameState.buzzedPlayer = { name: conn.playerName || 'لاعب', team: conn.playerTeam };
+            // Remember the turn time left at the buzz — if the 10s expire,
+            // the other team gets the same question with the remainder.
+            gameState.turnTimeLeftAtBuzz = gameState.timeLeft;
             addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
             playBuzzSound();
             startHostTimer();
@@ -2114,7 +2121,7 @@ function startSinglePlayer() {
         mode: '1v1',
         stage: (document.getElementById('stage-select') || {}).value || 'easy',
         progression: (document.getElementById('progression-select') || {}).value || 'stages',
-        timer: parseInt(((document.getElementById('timer-select') || {}).value || '60'), 10),
+        timer: parseInt(((document.getElementById('timer-select') || {}).value || '90'), 10),
         hostPlay: true,
         hostTeam: 'green'
     };
@@ -2647,8 +2654,14 @@ function playCheerSound() {
 const _origSendBuzz = sendBuzz;
 sendBuzz = function () {
     if (isHost && gameState.settings && gameState.settings.hostPlay) {
-        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && !gameState.buzzerLocked) {
+        // (2026-11-13) A team that already timed out on this question cannot
+        // buzz again — the answer has moved to the other team.
+        const myTeam = playerInfo.team || 'green';
+        if (!gameState.buzzedPlayer && !gameState.timerExpired && gameState.selectedIdx !== null && !gameState.winner && !gameState.buzzerLocked && !(gameState.buzzedOutTeams && gameState.buzzedOutTeams[myTeam])) {
             gameState.buzzedPlayer = { name: playerInfo.name || 'المقدم', team: playerInfo.team || 'green' };
+            // Remember the turn time left at the buzz — if the 10s expire,
+            // the other team gets the same question with the remainder.
+            gameState.turnTimeLeftAtBuzz = gameState.timeLeft;
             addEvent('ضغط ' + gameState.buzzedPlayer.name + ' الجرس للفريق ' + (gameState.buzzedPlayer.team === 'green' ? 'الأخضر' : 'البرتقالي'));
             playBuzzSound();
             startHostTimer();
@@ -2873,8 +2886,8 @@ function tryPickType(type, letter, stage) {
         const it = picked.item;
         // Fix 2026-11-09: word questions showed no options at all (opts was
         // null), so players had nothing to choose from — only the buzzer.
-        // Now every word question is a 3-option choice: the correct word plus
-        // 2 distractors from the same stage but different letters.
+        // Now every word question is a 4-option choice: the correct word plus
+        // 3 distractors from the same stage but different letters.
         const correct = wordOf(it);
         let opts = null;
         if (correct) {
@@ -2888,10 +2901,10 @@ function tryPickType(type, letter, stage) {
                     if (s && !seen.has(s)) { seen.add(s); cands.push(s); }
                 });
             });
-            if (cands.length >= 2) {
+            if (cands.length >= 3) {
                 const d = [];
-                while (d.length < 2 && cands.length) d.push(cands.splice(Math.floor(Math.random() * cands.length), 1)[0]);
-                opts = [correct, d[0], d[1]].sort(() => Math.random() - 0.5);
+                while (d.length < 3 && cands.length) d.push(cands.splice(Math.floor(Math.random() * cands.length), 1)[0]);
+                opts = [correct, d[0], d[1], d[2]].sort(() => Math.random() - 0.5);
             }
         }
         if (typeof it === 'string') {
@@ -2982,6 +2995,9 @@ function selectCell(idx) {
     stopHostTimer();
     gameState.buzzedPlayer = null;
     gameState.timerExpired = false;
+    // (2026-11-13) New question — both teams get a fresh chance to answer.
+    gameState.buzzedOutTeams = {};
+    gameState.turnTimeLeftAtBuzz = 0;
     gameState.selectedIdx = idx;
     optionFlash = null;
     addEvent('اختير الحرف ' + gameState.grid[idx].letter);
@@ -3003,6 +3019,9 @@ function changeQuestion() {
     gameState.buzzerLocked = true;
     gameState.timeLeft = 0;
     gameState.timerExpired = false;
+    // (2026-11-13) New question — both teams get a fresh chance to answer.
+    gameState.buzzedOutTeams = {};
+    gameState.turnTimeLeftAtBuzz = 0;
     addEvent('تم الانتقال إلى سؤال آخر');
     loadQuestionForSelected();
     renderUI();
@@ -3416,16 +3435,21 @@ function renderTv() {
 /* ===== Edit D (Phase 4): turn timer + turn rotation + polish ===== */
 /* The old 10s buzzer timer is now the configurable TURN timer:
    - Line 594: MAX_TIMER_SECONDS 10 -> 60 (let, so the timer can set it to 30/60).
-   - startTurnTimer() uses gameState.turnSeconds from the lobby (30/60/none, default 60).
+   - startTurnTimer() uses gameState.turnSeconds from the lobby (30/60/90/none, default 90).
    - The timer starts when the host picks a cell; on expiry the turn auto-passes.
    - Fix 5: the buzzer opens a 10s quick-answer window (startHostTimer stops the
      turn timer and counts down from 10); the turn timer restarts on the next pick. */
 
-function startTurnTimer() {
+function startTurnTimer(seconds) {
     stopHostTimer();
-    if (!gameState.turnSeconds || gameState.turnSeconds <= 0) return; // timer: none
-    MAX_TIMER_SECONDS = gameState.turnSeconds;
-    gameState.timeLeft = gameState.turnSeconds;
+    // Optional duration: when the 10s answer window expires, the other team
+    // gets the SAME question with the remaining time (2026-11-13) — so the
+    // turn timer can be restarted with that remainder instead of the full
+    // turnSeconds.
+    const dur = (typeof seconds === 'number' && seconds > 0) ? seconds : gameState.turnSeconds;
+    if (!dur || dur <= 0) return; // timer: none
+    MAX_TIMER_SECONDS = dur;
+    gameState.timeLeft = dur;
     gameState.timerExpired = false;
     renderUI();
     broadcastState();
@@ -3456,8 +3480,9 @@ startHostTimer = function () {
     // setting (30/60/none) still governs the turn itself; the next cell pick
     // starts a fresh turn timer. With timer 'none' the buzz window is still
     // 10s, so the game cannot stall after a buzz.
-    // (2026-11-13) On expiry the turn auto-passes to the other team
-    // (doPassTurn) — nobody can answer after time is up.
+    // (2026-11-13) On expiry the OTHER team gets the same question with the
+    // remaining time (see below) — only when no time is left, or both teams
+    // already had a chance, does the turn auto-pass (doPassTurn).
     stopHostTimer();
     MAX_TIMER_SECONDS = 10;
     gameState.timeLeft = 10;
@@ -3475,8 +3500,29 @@ startHostTimer = function () {
             gameState.timerExpired = true;
             stopHostTimer();
             playTimeUpSound();
-            doPassTurn();
-            gameState.lastMove = '⏰ انتهى وقت الإجابة — تم التمرير تلقائياً';
+            // (2026-11-13) Same question, remaining time: when the 10s answer
+            // window expires, the OTHER team gets the same question with the
+            // time left from the turn (turn time at the buzz minus the 10s).
+            // Only when no time is left, or both teams already had a chance,
+            // does the turn pass and the question go away.
+            const outTeam = gameState.buzzedPlayer ? gameState.buzzedPlayer.team : null;
+            if (outTeam) {
+                if (!gameState.buzzedOutTeams) gameState.buzzedOutTeams = {};
+                gameState.buzzedOutTeams[outTeam] = true;
+            }
+            const otherTeam = outTeam === 'green' ? 'orange' : 'green';
+            const remaining = (gameState.turnTimeLeftAtBuzz || 0) - 10;
+            const otherOut = !!(gameState.buzzedOutTeams && gameState.buzzedOutTeams[otherTeam]);
+            if (remaining <= 0 || otherOut) {
+                doPassTurn();
+                gameState.lastMove = '⏰ انتهى وقت الإجابة — تم التمرير تلقائياً';
+            } else {
+                gameState.buzzedPlayer = null;
+                gameState.timerExpired = false;
+                gameState.buzzerLocked = false;
+                gameState.lastMove = '⏰ انتهى وقت الإجابة — الدور للفريق ' + (otherTeam === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠') + ' بباقي الوقت (' + remaining + ' ث)';
+                startTurnTimer(remaining);
+            }
             renderUI();
             broadcastState();
         }
@@ -3532,7 +3578,7 @@ function renderTurnTimerUI() {
         timerBox.style.display = 'block';
         timerDigits.textContent = gameState.timeLeft + ' ثوانٍ';
         timerDigits.classList.toggle('urgent', gameState.timeLeft <= 3);
-        const pct = (gameState.timeLeft / (gameState.turnSeconds || MAX_TIMER_SECONDS || 60)) * 100;
+        const pct = (gameState.timeLeft / (gameState.turnSeconds || MAX_TIMER_SECONDS || 90)) * 100;
         timerBar.style.width = pct + '%';
         timerBar.style.backgroundColor = gameState.timeLeft <= 3 ? '#ef4444' : '#38bdf8';
     }
