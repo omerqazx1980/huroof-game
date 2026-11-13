@@ -1308,7 +1308,7 @@ function addEvent(message) {
     const panel = document.getElementById('history-panel');
     const list = document.getElementById('history-list');
     if (!panel || !list) return;
-    panel.style.display = 'block';
+    if (gameState.phase !== 'playing') panel.style.display = 'block';
     list.replaceChildren();
     eventHistory.forEach(item => {
         const li = document.createElement('li');
@@ -2711,6 +2711,12 @@ function renderExtraUI() {
     if (nrBtn) nrBtn.style.display = hideHostSetup ? 'none' : '';
     const invRow = document.getElementById('host-invite-row');
     if (invRow) invRow.style.display = hideHostSetup ? 'none' : '';
+    // (2026-11-13) Shrink the screen during play: the round-history log and
+    // the room-info panel disappear while playing; they return in the lobby.
+    const hp = document.getElementById('history-panel');
+    if (hp) hp.style.display = (gameState.phase === 'playing') ? 'none' : ((isHost && eventHistory.length) ? 'block' : 'none');
+    const hib = document.getElementById('host-info-bar');
+    if (hib) hib.style.display = (isHost && !gameState.solo && gameState.phase !== 'playing') ? 'block' : 'none';
     const lm = document.getElementById('last-move');
     if (lm) lm.textContent = gameState.lastMove || '—';
     const lvl = document.getElementById('current-level-badge');
