@@ -389,6 +389,9 @@
                 <button class="btn btn-green" onclick="judgeAnswer(true)">✅ إجابة صحيحة</button>
                 <button class="btn btn-danger" onclick="judgeAnswer(false)">❌ إجابة خاطئة</button>
             </div>
+            <div class="flex-row" id="reveal-row" style="display: none; margin-bottom: 10px;">
+                <button class="btn btn-primary" id="reveal-options-btn" onclick="revealOptions()">🆘 إظهار الخيارات (مساعدة)</button>
+            </div>
             <div class="flex-row">
                 <button class="btn btn-green" onclick="colorSelectedCell('green')">تلوين للأخضر (+10)</button>
                 <button class="btn btn-orange" onclick="colorSelectedCell('orange')">تلوين للبرتقالي (+10)</button>
@@ -1181,6 +1184,27 @@ function openBuzzer() {
     broadcastState();
 }
 
+/* (2026-11-13) Options as HELP: the host reveals them when neither team
+   can answer. The reveal gives both teams a fresh chance with the options
+   visible — it clears any timeout/buzz state, unlocks the buzzer and
+   restarts the turn timer, so a team can buzz and tap an option. */
+function revealOptions() {
+    if (!isHost || gameState.selectedIdx === null || gameState.winner || gameState.stageWinner) return;
+    if (!gameState.questionOptions || !gameState.questionOptions.length) return;
+    if (gameState.optionsRevealed) return;
+    gameState.optionsRevealed = true;
+    stopHostTimer();
+    gameState.buzzedPlayer = null;
+    gameState.timerExpired = false;
+    gameState.buzzedOutTeams = {};
+    gameState.buzzerLocked = false;
+    gameState.lastMove = '🆘 أظهر المقدم الخيارات كمساعدة — اضغط الجرس واختر إجابة';
+    addEvent('أظهر المقدم الخيارات كمساعدة');
+    startTurnTimer();
+    renderUI();
+    broadcastState();
+}
+
 /* Host-playing (2026-11-13): when the host plays WITH the players, the buzzer
    must open to the fastest — the host cannot open it manually while playing.
    So the buzzer auto-opens as soon as a question is live. */
@@ -1502,7 +1526,7 @@ Object.assign(gameState, {
     settings: { mode: '1v1', stage: 'easy', timer: 90, hostPlay: false, hostTeam: 'green', progression: 'stages' },
     bankStats: { used: 0, total: 0, version: '' },
     stageWinner: null, solo: false, roomCodeShort: '', winningPath: [],
-    turnTimeLeftAtBuzz: 0, buzzedOutTeams: {}
+    turnTimeLeftAtBuzz: 0, buzzedOutTeams: {}, optionsRevealed: false
 });
 
 const CONN_MAX_ATTEMPTS = 3;
@@ -1825,6 +1849,7 @@ function broadcastState() {
         ageLevel: gameState.ageLevel,
         questionText: gameState.questionText,
         questionOptions: gameState.questionOptions || null,
+        optionsRevealed: gameState.optionsRevealed || false,
         questionType: gameState.questionType || '',
         buzzedPlayer: gameState.buzzedPlayer,
         buzzerLocked: gameState.buzzerLocked,
@@ -2739,7 +2764,11 @@ function renderExtraUI() {
     if (optBox) {
         optBox.innerHTML = '';
         const opts = gameState.questionOptions;
-        if (opts && opts.length) {
+        // (2026-11-13) Options are a HELP, not the default: they only show
+        // after the host reveals them (or always in solo, where the single
+        // player answers by tapping). Otherwise the teams answer verbally
+        // and the host judges with ✅/❌.
+        if (opts && opts.length && (gameState.optionsRevealed || gameState.solo)) {
             const myName = playerInfo.name || '';
             const canTap = !!gameState.buzzedPlayer && !!myName && gameState.buzzedPlayer.name === myName && !gameState.timerExpired;
             opts.forEach((opt) => {
@@ -2758,6 +2787,11 @@ function renderExtraUI() {
     }
     const jr = document.getElementById('judge-row');
     if (jr) jr.style.display = (isHost && gameState.buzzedPlayer && gameState.selectedIdx !== null && !gameState.winner) ? 'flex' : 'none';
+    // (2026-11-13) Reveal-options help button: host only, multiplayer only
+    // (solo always shows its options), while a question is live and the
+    // options are still hidden.
+    const rr = document.getElementById('reveal-row');
+    if (rr) rr.style.display = (isHost && !gameState.solo && gameState.selectedIdx !== null && gameState.questionOptions && gameState.questionOptions.length && !gameState.optionsRevealed && !gameState.winner && !gameState.stageWinner) ? 'flex' : 'none';
     const obb = document.getElementById('open-buzzer-btn');
     if (obb) obb.style.display = (isHost && gameState.selectedIdx !== null && gameState.buzzerLocked && !gameState.buzzedPlayer && !gameState.winner) ? 'inline-flex' : 'none';
     // (2026-11-13) The buzzer now sits directly under the question. It shows
@@ -3068,6 +3102,7 @@ function selectCell(idx) {
     // (2026-11-13) New question — both teams get a fresh chance to answer.
     gameState.buzzedOutTeams = {};
     gameState.turnTimeLeftAtBuzz = 0;
+    gameState.optionsRevealed = false;
     gameState.selectedIdx = idx;
     optionFlash = null;
     addEvent('اختير الحرف ' + gameState.grid[idx].letter);
@@ -3092,6 +3127,7 @@ function changeQuestion() {
     // (2026-11-13) New question — both teams get a fresh chance to answer.
     gameState.buzzedOutTeams = {};
     gameState.turnTimeLeftAtBuzz = 0;
+    gameState.optionsRevealed = false;
     addEvent('تم الانتقال إلى سؤال آخر');
     loadQuestionForSelected();
     renderUI();
@@ -3462,7 +3498,9 @@ function renderTv() {
     const opts = document.getElementById('tv-options');
     if (opts) {
         opts.innerHTML = '';
-        (gameState.questionOptions || []).forEach(o => {
+        // (2026-11-13) TV mirrors the players: options only show once the
+        // host reveals them as help (or always in solo).
+        if (gameState.optionsRevealed || gameState.solo) (gameState.questionOptions || []).forEach(o => {
             const d = document.createElement('div');
             d.className = 'tv-opt';
             d.textContent = o;
