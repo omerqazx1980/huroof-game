@@ -782,7 +782,12 @@ function renderUI() {
     document.getElementById('current-level-badge').textContent = "المستوى: " + (LEVEL_NAMES[gameState.ageLevel] || "جميع الأعمار");
 
     if (isHost) {
-        document.getElementById('host-answer').textContent = gameState.answerText;
+        // (2026-11-13) The correct answer is shown to the host ONLY when the
+        // host is NOT playing — so they can judge verbal answers. When the
+        // host plays (hostPlay), they are a contestant and must NOT see the
+        // answer in advance (otherwise they could buzz and pick it).
+        const hostPlaying = !!(gameState.settings && gameState.settings.hostPlay);
+        document.getElementById('host-answer').textContent = hostPlaying ? '-' : gameState.answerText;
     }
 
     const buzzBanner = document.getElementById('buzz-banner');
