@@ -3583,10 +3583,20 @@ selectCell = function (idx) {
     }
 };
 
-/* Rotate the turn after a cell is coloured (+10), with a soft pop sound. */
+/* (2026-11-13) The team that answers correctly KEEPS the turn — they keep
+   choosing the letter until the turn moves away from them (on a failure).
+   So after a cell is coloured (+10), the turn goes to the team that took
+   the cell (the answering team); it does NOT rotate to the other team. */
 const _cColorSelectedCell = colorSelectedCell;
 colorSelectedCell = function (color) {
     if (gameState.selectedIdx === null || gameState.selectedIdx === undefined) return;
+    // (2026-11-13) No scoring after the time is up: colouring a cell for a
+    // team (+10) needs someone currently buzzed, the timer not expired, and
+    // the coloured team not timed-out on this question. 'neutral' (reset) is
+    // always allowed — it is a correction, not a score.
+    if ((color === 'green' || color === 'orange')) {
+        if (!gameState.buzzedPlayer || gameState.timerExpired || (gameState.buzzedOutTeams && gameState.buzzedOutTeams[color])) return;
+    }
     const idx = gameState.selectedIdx;
     const before = gameState.grid[idx] ? gameState.grid[idx].owner : null;
     _cColorSelectedCell(color);
@@ -3595,8 +3605,8 @@ colorSelectedCell = function (color) {
         cellPop = { idx: idx, until: Date.now() + 600 };
         playPopSound();
         if ((after === 'green' || after === 'orange') && !gameState.winner && !gameState.stageWinner) {
-            gameState.turn = gameState.turn === 'green' ? 'orange' : 'green';
-            gameState.lastMove = '✅ ' + (after === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠') + ' أخذ الحرف — الدور الآن للفريق ' + (gameState.turn === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠');
+            gameState.turn = after;
+            gameState.lastMove = '✅ ' + (after === 'green' ? 'الفريق الأخضر 🟢' : 'الفريق البرتقالي 🟠') + ' أخذ الحرف — الدور يبقى للفريق ' + (after === 'green' ? 'الأخضر 🟢' : 'البرتقالي 🟠');
             renderUI();
             broadcastState();
         }
