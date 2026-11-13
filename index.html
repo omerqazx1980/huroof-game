@@ -328,7 +328,6 @@
                         <option value="25-50">25 - 50 سنة</option>
                     </select>
                 </div>
-                <button class="btn btn-gray" id="new-round-btn" onclick="resetBoard()">جولة جديدة 🔄</button>
             </div>
             
             <div class="flex-row" id="host-invite-row" style="justify-content: center; background: #1e293b; padding: 10px; border-radius: 10px;">
@@ -405,6 +404,10 @@
                 <button class="btn btn-gray" onclick="adjustScore('green', -5)">🟢 -5</button>
                 <button class="btn btn-orange" onclick="adjustScore('orange', 5)">🟠 +5</button>
                 <button class="btn btn-gray" onclick="adjustScore('orange', -5)">🟠 -5</button>
+            </div>
+            <div class="flex-row" style="margin-top: 10px;">
+                <button class="btn btn-gray" id="new-round-btn" onclick="resetBoard()">جولة جديدة 🔄</button>
+                <button class="btn btn-primary" onclick="copyInviteLink('tv')">📺 رابط التلفاز</button>
             </div>
             <div id="history-panel" style="display: none; margin-top: 12px; background: #1e293b; padding: 10px; border-radius: 8px;">
                 <div style="font-weight: bold; margin-bottom: 6px;">📜 سجل الجولة</div>
@@ -2704,11 +2707,10 @@ function renderExtraUI() {
     if (swBtn) swBtn.style.display = hideForPlayers ? 'none' : '';
     const ppBtn = document.getElementById('player-pass-btn');
     if (ppBtn) ppBtn.style.display = hideForPlayers ? 'none' : '';
-    // During play, the host doesn't need the setup buttons (invite links and
-    // new round) — they belong to the lobby.
+    // During play, the host doesn't need the invite-links row — it belongs
+    // to the lobby. (The replay + TV buttons live in the host controls now,
+    // so they stay visible during play.)
     const hideHostSetup = isHost && gameState.phase === 'playing';
-    const nrBtn = document.getElementById('new-round-btn');
-    if (nrBtn) nrBtn.style.display = hideHostSetup ? 'none' : '';
     const invRow = document.getElementById('host-invite-row');
     if (invRow) invRow.style.display = hideHostSetup ? 'none' : '';
     // (2026-11-13) Shrink the screen during play: the round-history log and
